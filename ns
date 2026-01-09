@@ -7,6 +7,11 @@ set -e
 target="${1-}"
 devshell="${2-}"
 
+if [ -d "$target" ]; then
+  target="$(dirname "$target")/$(basename "$target")"
+fi
+target="$(realpath "$target")"
+
 cd "$target"
 
 if [ -f "$target/flake.nix" ]; then

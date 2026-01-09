@@ -6,3 +6,8 @@ Try it from anywhere (must have flakes/nix-command features enabled):
 ```sh
 nix run github:eureka-cpu/ns -- <DIR>
 ```
+
+Add it to your user profile:
+```sh
+nix profile install github:eureka-cpu/ns
+```
