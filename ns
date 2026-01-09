@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# USAGE: `ns <DIR>`, optionally specify a devShell attribute
+
+set -e
+
+target="${1-}"
+devshell="${2-}"
+
+cd "$target"
+
+if [ -f "$target/flake.nix" ]; then
+  if [ -z "$devshell" ]; then
+    nix develop -c "$SHELL"
+  else
+    nix develop "$devshell" -c "$SHELL"
+  fi
+elif [ -f "$target/shell.nix" ]; then
+  nix-shell --run "$SHELL"
+fi
