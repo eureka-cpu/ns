@@ -37,9 +37,10 @@
               inherit cmdliner;
             };
             postInstall = ''
-              mkdir -p $out/bin/completions
-              ${cmdliner}/bin/cmdliner tool-completion --standalone-completion bash ns > $out/bin/completions/ns
-              ${cmdliner}/bin/cmdliner tool-completion --standalone-completion zsh ns > $out/bin/completions/_ns
+              mkdir -p $out/share/bash-completion/completions
+              ${cmdliner}/bin/cmdliner tool-completion --standalone-completion bash ns > $out/share/bash-completion/completions/ns
+              mkdir -p $out/share/zsh/site-functions
+              ${cmdliner}/bin/cmdliner tool-completion --standalone-completion zsh ns > $out/share/zsh/site-functions/_ns
             '';
             doCheck = false;
           };
