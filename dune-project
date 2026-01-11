@@ -1,0 +1,28 @@
+(lang dune 3.20)
+
+(name ns)
+
+(generate_opam_files true)
+
+(source
+ (github eureka-cpu/ns))
+
+(authors "eureka-cpu <github.eureka@gmail.com>")
+
+(maintainers "eureka-cpu <github.eureka@gmail.com>")
+
+(license LICENSE)
+
+(package
+ (name ns)
+ (synopsis "cd + nix-shell")
+ (description
+  "Literally the simplest script in existence for changing directories and entering a nix shell.")
+ (depends
+  ocaml
+  (cmdliner
+   (>= 2.1.0)))
+ (tags
+  ("cd" "nix develop" "nix-shell" "flakes" "nix-command")))
+
+; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html

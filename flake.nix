@@ -1,18 +1,58 @@
 {
   description = "Literally the simplest script in existence for changing directories and entering a nix shell.";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-  outputs = { nixpkgs, ... }:
+  outputs = { self, nixpkgs, ... }:
     let
+      inherit (builtins) attrValues;
       inherit (nixpkgs.lib) genAttrs;
       inherit (nixpkgs.lib.systems) flakeExposed;
       eachSystem = f: genAttrs flakeExposed (system: f (import nixpkgs { inherit system; }));
     in
     {
-      packages = eachSystem (pkgs: {
-        default = pkgs.writeShellApplication {
-          name = "ns";
-          text = builtins.readFile ./ns;
+      packages = eachSystem (pkgs:
+        let
+          inherit (pkgs.ocamlPackages) buildDunePackage;
+          inherit (pkgs.lib) cleanSource;
+          cmdliner = pkgs.ocamlPackages.cmdliner.overrideAttrs (old:
+            let
+              version = "2.1.0";
+            in
+            {
+              inherit version;
+              src = builtins.fetchurl {
+                url = "https://erratique.ch/software/${old.pname}/releases/${old.pname}-${version}.tbz";
+                sha256 = "sha256:1s9lhkzrblaf1rk0b9lg95622p0jv4qmmby8xg8jzma3rlacc548";
+              };
+            });
+        in
+        {
+          default = buildDunePackage {
+            pname = "ns";
+            version = "0.1.0";
+            src = cleanSource ./.;
+            nativeBuildInputs = attrValues {
+              inherit (pkgs) dune;
+            };
+            buildInputs = attrValues {
+              inherit cmdliner;
+            };
+            postInstall = ''
+              mkdir -p $out/bin/completions
+              ${cmdliner}/bin/cmdliner tool-completion --standalone-completion bash ns > $out/bin/completions/ns
+              ${cmdliner}/bin/cmdliner tool-completion --standalone-completion zsh ns > $out/bin/completions/_ns
+            '';
+            doCheck = false;
+          };
+        });
+      devShells = eachSystem (pkgs: {
+        default = pkgs.mkShell {
+          inputsFrom = [ self.packages.${pkgs.stdenv.hostPlatform.system}.default ];
+          packages = attrValues {
+            inherit (pkgs) ocamlformat;
+            inherit (pkgs.ocamlPackages) ocaml-lsp odoc;
+          };
         };
       });
+      formatter = eachSystem (pkgs: pkgs.nixpkgs-fmt);
     };
 }
