@@ -5,8 +5,8 @@ description:
   "Literally the simplest script in existence for changing directories and entering a nix shell."
 maintainer: ["eureka-cpu <github.eureka@gmail.com>"]
 authors: ["eureka-cpu <github.eureka@gmail.com>"]
-license: "LICENSE"
-tags: ["cd" "nix develop" "nix-shell" "flakes" "nix-command"]
+license: "MIT"
+tags: ["nix" "devshell" "nix-shell" "flakes" "nix-command"]
 homepage: "https://github.com/eureka-cpu/ns"
 bug-reports: "https://github.com/eureka-cpu/ns/issues"
 depends: [

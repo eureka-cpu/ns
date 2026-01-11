@@ -11,7 +11,7 @@
 
 (maintainers "eureka-cpu <github.eureka@gmail.com>")
 
-(license LICENSE)
+(license MIT)
 
 (package
  (name ns)
@@ -23,6 +23,6 @@
   (cmdliner
    (>= 2.1.0)))
  (tags
-  ("cd" "nix develop" "nix-shell" "flakes" "nix-command")))
+  ("nix" "devshell" "nix-shell" "flakes" "nix-command")))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html

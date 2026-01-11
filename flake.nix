@@ -43,6 +43,7 @@
               ${cmdliner}/bin/cmdliner tool-completion --standalone-completion zsh ns > $out/share/zsh/site-functions/_ns
             '';
             doCheck = false;
+            meta.license = pkgs.lib.licenses.mit;
           };
         });
       devShells = eachSystem (pkgs: {
