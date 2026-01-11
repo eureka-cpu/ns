@@ -28,7 +28,7 @@
         {
           default = buildDunePackage {
             pname = "ns";
-            version = "0.1.0";
+            version = "0.2.0";
             src = cleanSource ./.;
             nativeBuildInputs = attrValues {
               inherit (pkgs) dune;

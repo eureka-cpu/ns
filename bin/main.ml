@@ -1,6 +1,6 @@
 open Cmdliner
 
-let version = "0.1.0"
+let version = "0.2.0"
 
 (** Parse target argument for optional attribute selection *)
 let parse_target maybe_attrpath =
