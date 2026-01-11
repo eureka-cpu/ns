@@ -15,7 +15,7 @@
 
 (package
  (name ns)
- (synopsis "cd + nix-shell")
+ (synopsis "A unified interface for nix shell.")
  (description
   "Literally the simplest script in existence for changing directories and entering a nix shell.")
  (depends
