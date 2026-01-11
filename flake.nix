@@ -52,6 +52,9 @@
             inherit (pkgs) ocamlformat;
             inherit (pkgs.ocamlPackages) ocaml-lsp odoc;
           };
+          shellHook = ''
+            dune build # Ensure build artifacts exist for LSP
+          '';
         };
       });
       formatter = eachSystem (pkgs: pkgs.nixpkgs-fmt);
