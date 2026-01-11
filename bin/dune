@@ -2,21 +2,3 @@
  (public_name ns)
  (name main)
  (libraries unix cmdliner))
-
-(rule
- (target ns)
- (mode promote)
- (action
-  (with-stdout-to
-   %{target}
-   (progn
-    (run cmdliner tool-completion --standalone-completion bash ns)))))
-
-(rule
- (target _ns)
- (mode promote)
- (action
-  (with-stdout-to
-   %{target}
-   (progn
-    (run cmdliner tool-completion --standalone-completion zsh ns)))))
