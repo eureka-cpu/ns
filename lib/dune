@@ -1,0 +1,3 @@
+(library
+ (name ns)
+ (libraries unix cmdliner))

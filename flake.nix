@@ -30,19 +30,22 @@
             pname = "ns";
             version = "0.2.0";
             src = cleanSource ./.;
-            nativeBuildInputs = attrValues {
-              inherit (pkgs) dune;
-            };
             buildInputs = attrValues {
               inherit cmdliner;
             };
+            doCheck = true;
+            nativeCheckInputs = attrValues {
+              inherit (pkgs) ocamlformat;
+            };
+            checkPhase = ''
+              dune fmt
+            '';
             postInstall = ''
               mkdir -p $out/share/bash-completion/completions
               ${cmdliner}/bin/cmdliner tool-completion --standalone-completion bash ns > $out/share/bash-completion/completions/ns
               mkdir -p $out/share/zsh/site-functions
               ${cmdliner}/bin/cmdliner tool-completion --standalone-completion zsh ns > $out/share/zsh/site-functions/_ns
             '';
-            doCheck = false;
             meta.license = pkgs.lib.licenses.mit;
           };
         });

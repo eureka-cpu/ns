@@ -1,4 +1,4 @@
 (executable
  (public_name ns)
  (name main)
- (libraries unix cmdliner))
+ (libraries unix ns))
