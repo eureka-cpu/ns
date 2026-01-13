@@ -9,7 +9,7 @@ module Cli = struct
   let cmd entrypoint =
     let doc = "Enter a nix development shell in the target directory" in
     let info =
-      let version = "0.2.0" in
+      let version = "0.3.0" in
       Cmd.info "ns" ~doc ~version
     in
     Cmd.v info Term.(const entrypoint $ target_dir)

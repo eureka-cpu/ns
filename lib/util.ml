@@ -12,8 +12,25 @@ module Util = struct
         maybe_attrpath
   ;;
 
+  (** Return the absolute path or else exit with the underlying {!type:Unix.Error} *)
+  let realpath relative_dir =
+    try Unix.realpath relative_dir with
+    | Unix.Unix_error (e, _, _) ->
+      Error.handle_ns_error "%s" (Error.sprintf_unix_error e relative_dir)
+  ;;
+
+  (** Change directories and return the directory entered or else exit with the underlying {!type:Unix.Error} *)
+  let cd path =
+    try
+      Unix.chdir path;
+      path
+    with
+    | Unix.Unix_error (e, _, _) ->
+      Error.handle_ns_error "%s" (Error.sprintf_unix_error e path)
+  ;;
+
   (** Get the user's shell from the environment *)
-  let get_user_shell =
+  let shell =
     match Sys.getenv_opt "SHELL" with
     | Some s -> s
     | None -> "/bin/sh"

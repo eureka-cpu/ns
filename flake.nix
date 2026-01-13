@@ -31,6 +31,7 @@
             version = "0.2.0";
             src = cleanSource ./.;
             buildInputs = attrValues {
+              inherit (pkgs.ocamlPackages) bos;
               inherit cmdliner;
             };
             doCheck = true;
