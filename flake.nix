@@ -43,6 +43,7 @@
             '';
             postInstall = ''
               ${cmdliner}/bin/cmdliner install tool-support $out/bin/ns $out
+              ${cmdliner}/bin/cmdliner install generic-completion $out/share
             '';
             meta.license = pkgs.lib.licenses.mit;
           };
