@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "dunix": {
+      "locked": {
+        "lastModified": 1768618320,
+        "narHash": "sha256-j1tvbOR0X7SQu/AeF9jmUaCL3jomlv649BpnvOwTRRM=",
+        "owner": "eureka-cpu",
+        "repo": "dunix",
+        "rev": "135ce63194c003d5101da16be3d8a7819e6bd3b3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "eureka-cpu",
+        "ref": "master",
+        "repo": "dunix",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1767892417,
@@ -18,6 +34,7 @@
     },
     "root": {
       "inputs": {
+        "dunix": "dunix",
         "nixpkgs": "nixpkgs"
       }
     }
