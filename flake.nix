@@ -30,7 +30,7 @@
           depends = let depends = listToAttrs (map (dep: { name = dep; value = pkgs.ocamlPackages.${dep}; }) (attrNames (foldl' (acc: dep: acc // dep) { } dune-project.package.depends))); in removeAttrs depends [ "ocaml" "cmdliner" ];
         in
         {
-          default = buildDunePackage {
+          default = buildDunePackage (finalAttrs: {
             inherit (dune-project) version;
             pname = dune-project.package.name;
             src = cleanSource ./.;
@@ -42,6 +42,10 @@
               inherit (pkgs) ocamlformat;
             };
             checkPhase = ''
+              if ! diff "${finalAttrs.src}/${dune-project.name}.opam" "./${dune-project.name}.opam"; then
+                echo "Error: Generated opam file does not match provided opam file"
+                exit 1
+              fi
               dune fmt
             '';
             postInstall = ''
@@ -60,7 +64,7 @@
                 homepage = "https://${type}.com/${owner}/${repo}";
                 license = getLicenseFromSpdxId dune-project.license;
               };
-          };
+          });
         });
       devShells = eachSystem (pkgs: {
         default = pkgs.mkShell {
