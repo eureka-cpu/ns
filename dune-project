@@ -2,6 +2,8 @@
 
 (name ns)
 
+(version 0.3.2)
+
 (generate_opam_files true)
 
 (source
@@ -23,7 +25,9 @@
   (cmdliner
    (>= 2.1.0))
   (bos
-   (>= 0.2.1)))
+   (>= 0.2.1))
+  (dune-build-info
+   (>= 3.20.2)))
  (tags
   ("nix" "devshell" "nix-shell" "flakes" "nix-command")))
 
