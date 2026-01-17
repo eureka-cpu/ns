@@ -12,9 +12,9 @@
     {
       packages = eachSystem (pkgs:
         let
-          inherit (builtins) elem elemAt fetchurl attrNames foldl' listToAttrs;
+          inherit (builtins) elemAt split fetchurl attrNames foldl' listToAttrs;
           inherit (pkgs.ocamlPackages) buildDunePackage;
-          inherit (pkgs.lib) cleanSource splitStringBy getLicenseFromSpdxId;
+          inherit (pkgs.lib) cleanSource getLicenseFromSpdxId;
           cmdliner = pkgs.ocamlPackages.cmdliner.overrideAttrs (old:
             let
               version = "2.1.0";
@@ -27,7 +27,7 @@
               };
             });
           dune-project = pkgs.importDuneProject ./dune-project;
-          depends = removeAttrs (listToAttrs (map (dep: { name = dep; value = pkgs.ocamlPackages.${dep}; }) (attrNames (foldl' (acc: dep: acc // dep) { } dune-project.package.depends)))) [ "ocaml" "cmdliner" ];
+          depends = let depends = listToAttrs (map (dep: { name = dep; value = pkgs.ocamlPackages.${dep}; }) (attrNames (foldl' (acc: dep: acc // dep) { } dune-project.package.depends))); in removeAttrs depends [ "ocaml" "cmdliner" ];
         in
         {
           default = buildDunePackage {
@@ -51,7 +51,7 @@
             meta =
               let
                 inherit (dune-project.source) type owner repo;
-                maintainers = map (m: pkgs.lib.maintainers.${(elemAt (splitStringBy (_: curr: elem curr [ " " ]) false m) 0)}) dune-project.maintainers;
+                maintainers = map (m: pkgs.lib.maintainers.${(elemAt (split " " m) 0)}) dune-project.maintainers;
               in
               {
                 inherit maintainers;
