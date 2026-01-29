@@ -5,7 +5,7 @@ module Util = struct
   let parse_target maybe_attrpath =
     match String.split_on_char '#' maybe_attrpath with
     | [ dir ] -> dir, None
-    | [ dir; devshell ] -> dir, Some devshell
+    | [ dir; attr ] -> dir, Some attr
     | _ ->
       Error.handle_ns_error
         "invalid path or attribute selection syntax: %s\n%!"

@@ -2,7 +2,7 @@ open Ns
 open Ns.Cmd
 open Ns.Util
 
-let main target_dir =
+let main ({ target_dir; _ } : Cli.args) =
   let relative_dir, attribute = parse_target target_dir in
   let entrypoint = realpath relative_dir |> cd in
   let cmd =
