@@ -2,7 +2,7 @@
 
 (name ns)
 
-(version 0.3.2)
+(version 0.4.0)
 
 (generate_opam_files true)
 
@@ -19,7 +19,7 @@
  (name ns)
  (synopsis "A unified interface for nix shell.")
  (description
-  "Literally the simplest script in existence for changing directories and entering a nix shell.")
+  "An intuitive nix shell interface that unifies the `nix shell`, `nix develop` and `nix-shell` commands.")
  (depends
   ocaml
   (cmdliner
@@ -29,6 +29,12 @@
   (dune-build-info
    (>= 3.20.2)))
  (tags
-  ("nix" "devshell" "nix-shell" "flakes" "nix-command")))
+  ("nix"
+   "nix shell"
+   "nix develop"
+   "devshell"
+   "nix-shell"
+   "flakes"
+   "nix-command")))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html

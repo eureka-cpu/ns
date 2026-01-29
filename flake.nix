@@ -27,7 +27,7 @@
               };
             });
           dune-project = pkgs.importDuneProject ./dune-project;
-          depends = let depends = listToAttrs (map (dep: { name = dep; value = pkgs.ocamlPackages.${dep}; }) (attrNames (foldl' (acc: dep: acc // dep) { } dune-project.package.depends))); in removeAttrs depends [ "ocaml" "cmdliner" ];
+          depends = let depends = listToAttrs (map (dep: { name = dep; value = pkgs.ocamlPackages.${dep}; }) (attrNames (foldl' (acc: dep: acc // dep) { } dune-project.package.depends))); in removeAttrs depends [ "dune" "ocaml" "cmdliner" ];
         in
         {
           default = buildDunePackage (finalAttrs: {
@@ -42,11 +42,19 @@
               inherit (pkgs) ocamlformat;
             };
             checkPhase = ''
-              if ! diff "${finalAttrs.src}/${dune-project.name}.opam" "./${dune-project.name}.opam"; then
-                echo "Error: Generated opam file does not match provided opam file"
+              red() {
+                printf "\033[1;31m%s\033[0m" "$*"
+              }
+              if ! diff --color=always "${finalAttrs.src}/${dune-project.name}.opam" "./${dune-project.name}.opam"; then
+                printf "\n"
+                printf "$(red "Error:") Generated opam file does not match provided opam file\n"
                 exit 1
               fi
-              dune fmt
+              if ! dune fmt --diff-command="diff --color=always"; then
+                printf "\n"
+                printf "$(red "Error:") Some files are not properly formatted\n"
+                exit 1
+              fi
             '';
             postInstall = ''
               ${cmdliner}/bin/cmdliner install tool-support $out/bin/ns $out
