@@ -1,15 +1,23 @@
 open Error
 
 module Util = struct
+  type target =
+    | Path of string
+    | Uri of string
+
   (** Parse target argument for optional attribute selection *)
-  let parse_target maybe_attrpath =
-    match String.split_on_char '#' maybe_attrpath with
-    | [ dir ] -> dir, None
-    | [ dir; attr ] -> dir, Some attr
+  let parse_target target =
+    let parse_uri uri =
+      match String.split_on_char ':' uri with
+      | [ path ] -> Path path
+      | [ _; _ ] -> Uri uri
+      | _ -> Error.handle_ns_error "invalid uri: %s\n%!" uri
+    in
+    match String.split_on_char '#' target with
+    | [ uri ] -> parse_uri uri, None
+    | [ uri; attr ] -> parse_uri uri, Some attr
     | _ ->
-      Error.handle_ns_error
-        "invalid path or attribute selection syntax: %s\n%!"
-        maybe_attrpath
+      Error.handle_ns_error "invalid uri or attribute selection syntax: %s\n%!" target
   ;;
 
   (** Return the absolute path or else exit with the underlying {!type:Unix.Error} *)
