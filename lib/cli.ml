@@ -3,7 +3,7 @@ module Cli = struct
   open Error
   open Util.Util
 
-  (** A directory containing a nix shell entrypoint. *)
+  (** Either a directory containing a nix shell entrypoint, or the directory to start the subshell. *)
   type target_dir =
     { relative_dir : string
     ; attribute : string option
