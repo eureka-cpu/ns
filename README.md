@@ -13,9 +13,9 @@ ns [OPTION]… [SOURCE]… [TARGET_DIR]
 
 > Each SOURCE is positional and may be one of:
 > 
->   URI#attr            select a devshell or package from a flake
->   URI#{pkg1,pkg2}     compose multiple packages from a flake
->   DIR#attr            select from a local flake
+>   URI#ATTR            select a devshell or package from a flake
+>   URI#{DRV1,DRV2}     compose multiple packages from a flake
+>   DIR#ATTR            select from a local flake
 >   DIR                 use the default devshell in a directory
 > 
 > If the final argument is a plain directory path, ns will switch to that
