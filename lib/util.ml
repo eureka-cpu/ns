@@ -1,21 +1,34 @@
 open Error
 
 module Util = struct
-  type target =
-    | Path of string
-    | Uri of string
+  (** URI variants, like /path/to/flake or github:NixOS/nixpkgs *)
+  type uri =
+    (* A path with up to one attribute *)
+    | LocalResourceMaybeAttr of string * string option
+    (* A path with multiple attributes *)
+    | LocalResourceMultiAttr of string * string
+    (* A remote resource, eg. github:NixOS/nixpkgs *)
+    | RemoteResource of string
 
   (** Parse target argument for optional attribute selection *)
   let parse_target target =
-    let parse_uri uri =
+    let parse_uri uri attr_opt =
       match String.split_on_char ':' uri with
-      | [ path ] -> Path path
-      | [ _; _ ] -> Uri uri
-      | _ -> Error.handle_ns_error "invalid uri: %s\n%!" uri
+      | [ path ] ->
+        let is_multiattr maybe_multiattr =
+          String.starts_with ~prefix:"{" maybe_multiattr
+        in
+        (match attr_opt with
+         | Some attr ->
+           if is_multiattr attr
+           then LocalResourceMultiAttr (path, attr)
+           else LocalResourceMaybeAttr (path, attr_opt)
+         | None -> LocalResourceMaybeAttr (path, attr_opt))
+      | _ -> RemoteResource uri
     in
     match String.split_on_char '#' target with
-    | [ uri ] -> parse_uri uri, None
-    | [ uri; attr ] -> parse_uri uri, Some attr
+    | [ uri ] -> parse_uri uri None
+    | [ uri; attr ] -> parse_uri uri (Some attr)
     | _ ->
       Error.handle_ns_error "invalid uri or attribute selection syntax: %s\n%!" target
   ;;
@@ -29,10 +42,7 @@ module Util = struct
 
   (** Change directories and return the directory entered or else exit with the underlying {!type:Unix.Error} *)
   let cd path =
-    try
-      Unix.chdir path;
-      path
-    with
+    try Unix.chdir path with
     | Unix.Unix_error (e, _, _) ->
       Error.handle_ns_error "%s" (Error.sprintf_unix_error e path)
   ;;

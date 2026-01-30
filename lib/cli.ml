@@ -3,37 +3,67 @@ module Cli = struct
   open Error
   open Util.Util
 
-  (** Either a directory containing a nix shell entrypoint, or the directory to start the subshell. *)
-  type target_dir =
-    { relative_dir : string
+  (** The a directory containing a nix shell entrypoint, its attribute selection
+    and the directory to start the subshell. *)
+  type target_info =
+    { entrypoint : string option
     ; attribute : string option
+    ; subshell_dir : string option
     }
 
   type args =
     { installables : string list
-    ; target_dir : target_dir
+    ; target_info : target_info
     }
 
-  let nix_shell_args =
-    Arg.(value & pos_all dirpath [] & info [] ~docv:"[SOURCE ...] [TARGET_DIR]")
-  ;;
+  let nix_shell_args = Arg.(value & pos_all dirpath [] & info [])
 
+  (** Organize the args so that the main function knows what to do with them. *)
   let prepare_args =
-    let build nix_shell_args =
-      let installables, target_dir =
-        let default_target_dir = { relative_dir = Sys.getcwd (); attribute = None } in
-        match List.rev nix_shell_args with
-        | [] -> [], default_target_dir
+    let build original_args =
+      let installables, target_info =
+        let default_installables = []
+        and default_target =
+          { entrypoint = None; attribute = None; subshell_dir = None }
+        in
+        match List.rev original_args with
+        (* Args was empty. *)
+        | [] ->
+          ( default_installables
+          , { entrypoint = Some (Sys.getcwd ()); attribute = None; subshell_dir = None } )
+        (* Single arg passed. *)
         | [ target ] ->
           (match parse_target target with
-           | Path relative_dir, attribute -> [], { relative_dir; attribute }
-           | _ -> nix_shell_args, default_target_dir)
-        | target :: rest ->
-          (match parse_target target with
-           | Path relative_dir, attribute -> rest, { relative_dir; attribute }
-           | _ -> nix_shell_args, default_target_dir)
+           (* The multiattr behavior is handled by the default, so we only need to handle the case where
+             a single arg is passed that is a directory with up to one attribute *)
+           | LocalResourceMaybeAttr (entrypoint, attribute) ->
+             ( default_installables
+             , { entrypoint = Some entrypoint; attribute; subshell_dir = None } )
+           | _ -> original_args, default_target)
+        (* Two args passed. *)
+        | [ maybe_subshell_dir; target ] ->
+          (match parse_target maybe_subshell_dir, parse_target target with
+           (* If maybe_subshell_dir does not have any attributes we know the user wants to change directories
+             and we only need to support LocalResourceMaybeAttr for target since the default behavior is already defined *)
+           | ( LocalResourceMaybeAttr (subshell_dir, None)
+             , LocalResourceMaybeAttr (entrypoint, attribute) ) ->
+             ( default_installables
+             , { entrypoint = Some entrypoint
+               ; attribute
+               ; subshell_dir = Some subshell_dir
+               } )
+           | _ -> original_args, default_target)
+        (* Three or more args passed. *)
+        | maybe_subshell_dir :: remaining ->
+          (match parse_target maybe_subshell_dir with
+           (* If maybe_subshell_dir does not have attributes,
+             its the directory the user wants to go to before entering the subshell *)
+           | LocalResourceMaybeAttr (subshell_dir, None) ->
+             ( remaining
+             , { entrypoint = None; attribute = None; subshell_dir = Some subshell_dir } )
+           | _ -> original_args, default_target)
       in
-      { installables; target_dir }
+      { installables; target_info }
     in
     Term.(const build $ nix_shell_args)
   ;;
@@ -64,13 +94,13 @@ module Cli = struct
 Enter the default devshell in the current directory:
 \$ ns .
 
-Enter a devshell from another directory and move there:
+Enter a devshell from another directory and move to the flake directory:
 \$ ns ../<FLAKE_DIR>#<ATTR>
 
 Enter a devshell from another directory but stay in the current directory:
-\$ ns ../<FLAKE_DIR>#devShells.<SYSTEM>.<ATTR> . # must use fully qualified syntax
+\$ ns ../<FLAKE_DIR>#<ATTR> .
 
-Compose packages from a local flake and move there:
+Compose packages from a local flake and move to the flake directory:
 \$ ns ../<FLAKE_DIR>#{<DRV1>,<DRV2>}
 
 Compose packages from a local flake but stay in the current directory:
