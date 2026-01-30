@@ -4,12 +4,12 @@ open Ns.Util
 
 let main ({ installables; target_info } : Cli.args) =
   let ({ entrypoint; attribute; subshell_dir } : Cli.target_info) = target_info in
-  let entrypoint = Option.map realpath entrypoint in
   Option.value ~default:(Option.value ~default:(Sys.getcwd ()) entrypoint) subshell_dir
   |> cd;
   let cmd =
     match entrypoint with
     | Some entrypoint ->
+      Printf.eprintf "DEBUG: %s\n%!" entrypoint;
       (match flake_exists_at entrypoint with
        | true ->
          Cmd.builder "nix"

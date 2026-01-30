@@ -18,6 +18,9 @@ module Cli = struct
 
   let nix_shell_args = Arg.(value & pos_all dirpath [] & info [])
 
+  (* TODO: The only problem I have now is that the original args are still passed
+  in some cases, and we need to make them all absolute paths before using `cd` *)
+
   (** Organize the args so that the main function knows what to do with them. *)
   let prepare_args =
     let build original_args =
@@ -47,11 +50,18 @@ module Cli = struct
              and we only need to support LocalResourceMaybeAttr for target since the default behavior is already defined *)
            | ( LocalResourceMaybeAttr (subshell_dir, None)
              , LocalResourceMaybeAttr (entrypoint, attribute) ) ->
+             (* Printf.eprintf *)
+             (* "DEBUG: using entrypoint %s with subshell %s\n%!" *)
+             (* entrypoint *)
+             (* subshell_dir; *)
              ( default_installables
              , { entrypoint = Some entrypoint
                ; attribute
                ; subshell_dir = Some subshell_dir
                } )
+           | LocalResourceMaybeAttr (subshell_dir, None), LocalResourceMultiAttr _ ->
+             ( [ target ]
+             , { entrypoint = None; attribute = None; subshell_dir = Some subshell_dir } )
            | _ -> original_args, default_target)
         (* Three or more args passed. *)
         | maybe_subshell_dir :: remaining ->
