@@ -1,27 +1,28 @@
+(** Command line interface types and functions *)
 module Cli = struct
   open Cmdliner
   open Error
   open Util.Util
 
   (** The a directory containing a nix shell entrypoint, its attribute selection
-    and the directory to start the subshell. *)
+  and the directory to start the subshell. *)
   type target_info =
     { entrypoint : string option
     ; attribute : string option
     ; subshell_dir : string option
     }
 
-  type args =
+  (** Processed args that will be consumed by the main function to determine the
+  behavior of the program. *)
+  type final_args =
     { installables : string list
     ; target_info : target_info
     }
 
-  let nix_shell_args = Arg.(value & pos_all dirpath [] & info [])
+  (** Arguments passed to the program via the command line. *)
+  let args = Arg.(value & pos_all dirpath [] & info [])
 
-  (* TODO: The only problem I have now is that the original args are still passed
-  in some cases, and we need to make them all absolute paths before using `cd` *)
-
-  (** Organize the args so that the main function knows what to do with them. *)
+  (** Organizes the args so that the main function knows what to do with them. *)
   let prepare_args =
     let build original_args =
       let installables, target_info =
@@ -36,24 +37,20 @@ module Cli = struct
           , { entrypoint = Some (Sys.getcwd ()); attribute = None; subshell_dir = None } )
         (* Single arg passed. *)
         | [ target ] ->
-          (match parse_target target with
+          (match Uri.parse_target target with
            (* The multiattr behavior is handled by the default, so we only need to handle the case where
-             a single arg is passed that is a directory with up to one attribute *)
+           a single arg is passed that is a directory with up to one attribute *)
            | LocalResourceMaybeAttr (entrypoint, attribute) ->
              ( default_installables
              , { entrypoint = Some entrypoint; attribute; subshell_dir = None } )
-           | _ -> original_args, default_target)
+           | _ -> Uri.parse_targets_tr original_args, default_target)
         (* Two args passed. *)
         | [ maybe_subshell_dir; target ] ->
-          (match parse_target maybe_subshell_dir, parse_target target with
+          (match Uri.parse_target maybe_subshell_dir, Uri.parse_target target with
            (* If maybe_subshell_dir does not have any attributes we know the user wants to change directories
-             and we only need to support LocalResourceMaybeAttr for target since the default behavior is already defined *)
+           and we only need to support LocalResourceMaybeAttr for target since the default behavior is already defined *)
            | ( LocalResourceMaybeAttr (subshell_dir, None)
              , LocalResourceMaybeAttr (entrypoint, attribute) ) ->
-             (* Printf.eprintf *)
-             (* "DEBUG: using entrypoint %s with subshell %s\n%!" *)
-             (* entrypoint *)
-             (* subshell_dir; *)
              ( default_installables
              , { entrypoint = Some entrypoint
                ; attribute
@@ -62,20 +59,23 @@ module Cli = struct
            | LocalResourceMaybeAttr (subshell_dir, None), LocalResourceMultiAttr _ ->
              ( [ target ]
              , { entrypoint = None; attribute = None; subshell_dir = Some subshell_dir } )
-           | _ -> original_args, default_target)
+           | LocalResourceMaybeAttr (subshell_dir, None), RemoteResource uri ->
+             ( [ uri ]
+             , { entrypoint = None; attribute = None; subshell_dir = Some subshell_dir } )
+           | _ -> Uri.parse_targets_tr original_args, default_target)
         (* Three or more args passed. *)
         | maybe_subshell_dir :: remaining ->
-          (match parse_target maybe_subshell_dir with
+          (match Uri.parse_target maybe_subshell_dir with
            (* If maybe_subshell_dir does not have attributes,
-             its the directory the user wants to go to before entering the subshell *)
+           its the directory the user wants to go to before entering the subshell *)
            | LocalResourceMaybeAttr (subshell_dir, None) ->
-             ( remaining
+             ( Uri.parse_targets_tr remaining
              , { entrypoint = None; attribute = None; subshell_dir = Some subshell_dir } )
-           | _ -> original_args, default_target)
+           | _ -> Uri.parse_targets_tr original_args, default_target)
       in
       { installables; target_info }
     in
-    Term.(const build $ nix_shell_args)
+    Term.(const build $ args)
   ;;
 
   let cmd entrypoint =
@@ -101,26 +101,17 @@ module Cli = struct
       ; `S Manpage.s_examples
       ; `Pre
           {|
-Enter the default devshell in the current directory:
-\$ ns .
-
-Enter a devshell from another directory and move to the flake directory:
-\$ ns ../<FLAKE_DIR>#<ATTR>
+Enter the default devshell and change directories:
+\$ ns ../ns
 
 Enter a devshell from another directory but stay in the current directory:
-\$ ns ../<FLAKE_DIR>#<ATTR> .
+\$ ns ../ns#default .
 
-Compose packages from a local flake and move to the flake directory:
-\$ ns ../<FLAKE_DIR>#{<DRV1>,<DRV2>}
+Compose packages from a local flake in the current directory:
+\$ ns ../nixpkgs#{hello,cowsay}
 
-Compose packages from a local flake but stay in the current directory:
-\$ ns ../<FLAKE_DIR>#{<DRV1>,<DRV2>} .
-
-Compose from multiple URIs:
-\$ ns github:NixOS/nixpkgs#{<DRV1>,<DRV2>} github:NixOS/nixpkgs#<DRV3>
-
-Compose and move up a directory:
-\$ ns github:NixOS/nixpkgs#{<DRV1>,<DRV2>} ../<FLAKE_DIR>#<DRV3> ..
+Compose from multiple URIs and move up a directory:
+\$ ns github:NixOS/nixpkgs#{hello,cowsay} ../nixpkgs#pipes-rs ..
 |}
       ; `S Manpage.s_exit_status
       ; `S ""

@@ -1,4 +1,7 @@
+(** Error formatting and handlers *)
 module Error = struct
+  (* *)
+
   (** Format and report an error and exit with status code 1 *)
   let handle_ns_error fmt =
     Printf.ksprintf
