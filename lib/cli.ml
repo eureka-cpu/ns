@@ -14,16 +14,16 @@ module Cli = struct
 
   (** Processed args that will be consumed by the main function to determine the
   behavior of the program. *)
-  type final_args =
+  type strategy =
     { installables : string list
     ; target_info : target_info
     }
 
-  (** Arguments passed to the program via the command line. *)
-  let args = Arg.(value & pos_all dirpath [] & info [])
+  (** Positional URI arguments passed to the program via the command line. *)
+  let uris = Arg.(value & pos_all dirpath [] & info [])
 
-  (** Organizes the args so that the main function knows what to do with them. *)
-  let prepare_args =
+  (** Processes the args so that the main function knows what to do with them. *)
+  let make_strategy =
     let build original_args =
       let installables, target_info =
         let default_installables = []
@@ -31,11 +31,15 @@ module Cli = struct
           { entrypoint = None; attribute = None; subshell_dir = None }
         in
         match List.rev original_args with
-        (* Args was empty. *)
+        (**************)
+        (* Empty args *)
+        (**************)
         | [] ->
           ( default_installables
           , { entrypoint = Some (Sys.getcwd ()); attribute = None; subshell_dir = None } )
-        (* Single arg passed. *)
+        (******************)
+        (* One arg passed *)
+        (******************)
         | [ target ] ->
           (match Uri.parse_target target with
            (* The multiattr behavior is handled by the default, so we only need to handle the case where
@@ -44,7 +48,9 @@ module Cli = struct
              ( default_installables
              , { entrypoint = Some entrypoint; attribute; subshell_dir = None } )
            | _ -> Uri.parse_targets_tr original_args, default_target)
-        (* Two args passed. *)
+        (*******************)
+        (* Two args passed *)
+        (*******************)
         | [ maybe_subshell_dir; target ] ->
           (match Uri.parse_target maybe_subshell_dir, Uri.parse_target target with
            (* If maybe_subshell_dir does not have any attributes we know the user wants to change directories. *)
@@ -62,7 +68,9 @@ module Cli = struct
              ( [ uri ]
              , { entrypoint = None; attribute = None; subshell_dir = Some subshell_dir } )
            | _ -> Uri.parse_targets_tr original_args, default_target)
-        (* Three or more args passed. *)
+        (*****************************)
+        (* Three or more args passed *)
+        (*****************************)
         | maybe_subshell_dir :: remaining ->
           (match Uri.parse_target maybe_subshell_dir with
            (* If maybe_subshell_dir does not have any attributes we know the user wants to change directories.
@@ -75,7 +83,7 @@ module Cli = struct
       in
       { installables; target_info }
     in
-    Term.(const build $ args)
+    Term.(const build $ uris)
   ;;
 
   let cmd entrypoint =
@@ -125,7 +133,7 @@ Compose from multiple URIs and move up a directory:
       in
       Cmd.info "ns" ~doc ~man ~version
     in
-    Cmd.v info Term.(const entrypoint $ prepare_args)
+    Cmd.v info Term.(const entrypoint $ make_strategy)
   ;;
 
   let eval entrypoint = Cmd.eval (cmd entrypoint)

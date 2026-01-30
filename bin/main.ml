@@ -2,7 +2,7 @@ open Ns
 open Ns.Cmd
 open Ns.Util
 
-let main ({ installables; target_info } : Cli.final_args) =
+let main ({ installables; target_info } : Cli.strategy) =
   let ({ entrypoint; attribute; subshell_dir } : Cli.target_info) = target_info in
   Option.value ~default:(Option.value ~default:(Sys.getcwd ()) entrypoint) subshell_dir
   |> Unix.cd;

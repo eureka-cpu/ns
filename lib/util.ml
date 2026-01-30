@@ -40,11 +40,11 @@ module Util = struct
   module Uri = struct
     (* *)
 
-    (** URI variants, like /path/to/flake or github:NixOS/nixpkgs *)
+    (** URI variants, like {/path/to/flake#drv} or {github:NixOS/nixpkgs#drv} *)
     type uri =
-      (* A path with up to one attribute *)
+      (* A path with up to one attribute, eg. /path/to/resouce or /path/to/resource#... *)
       | LocalResourceMaybeAttr of string * string option
-      (* A path with multiple attributes *)
+      (* A path with multiple attributes, eg. /path/to/resouce#{...} *)
       | LocalResourceMultiAttr of string * string
       (* A remote resource, eg. github:NixOS/nixpkgs *)
       | RemoteResource of string
@@ -93,13 +93,13 @@ module Util = struct
 
     (** Parse target arguments recursively, returning a list of strings.
     This function is tail recursive optimized. *)
-    let parse_targets_tr list =
+    let parse_targets_tr targets =
       let rec parse_targets acc = function
         | [] -> acc
         | target :: remaining ->
           parse_targets (uri_to_string (parse_target target) :: acc) remaining
       in
-      parse_targets [] list
+      parse_targets [] targets
     ;;
   end
 end
