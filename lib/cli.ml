@@ -39,7 +39,7 @@ module Cli = struct
         | [ target ] ->
           (match Uri.parse_target target with
            (* The multiattr behavior is handled by the default, so we only need to handle the case where
-           a single arg is passed that is a directory with up to one attribute *)
+           a single arg is passed that is a directory with up to one attribute. *)
            | LocalResourceMaybeAttr (entrypoint, attribute) ->
              ( default_installables
              , { entrypoint = Some entrypoint; attribute; subshell_dir = None } )
@@ -47,8 +47,7 @@ module Cli = struct
         (* Two args passed. *)
         | [ maybe_subshell_dir; target ] ->
           (match Uri.parse_target maybe_subshell_dir, Uri.parse_target target with
-           (* If maybe_subshell_dir does not have any attributes we know the user wants to change directories
-           and we only need to support LocalResourceMaybeAttr for target since the default behavior is already defined *)
+           (* If maybe_subshell_dir does not have any attributes we know the user wants to change directories. *)
            | ( LocalResourceMaybeAttr (subshell_dir, None)
              , LocalResourceMaybeAttr (entrypoint, attribute) ) ->
              ( default_installables
@@ -66,8 +65,9 @@ module Cli = struct
         (* Three or more args passed. *)
         | maybe_subshell_dir :: remaining ->
           (match Uri.parse_target maybe_subshell_dir with
-           (* If maybe_subshell_dir does not have attributes,
-           its the directory the user wants to go to before entering the subshell *)
+           (* If maybe_subshell_dir does not have any attributes we know the user wants to change directories.
+           In this case we do not need to worry about the order of the remaining arguments since it is guaranteed
+           to be a list of packages to compose with `nix shell`. *)
            | LocalResourceMaybeAttr (subshell_dir, None) ->
              ( Uri.parse_targets_tr remaining
              , { entrypoint = None; attribute = None; subshell_dir = Some subshell_dir } )
