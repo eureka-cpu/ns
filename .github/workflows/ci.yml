@@ -1,0 +1,40 @@
+name: CI
+
+run-name: ${{ github.event_name == 'pull_request' && 'Pull Request' || 'Commit' }} by @${{ github.actor }}
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+  nix-flake-check:
+    name: Nix Flake Check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: DeterminateSystems/nix-installer-action@main
+      - run: nix flake check --keep-going -L
+
+  nix-fmt-check:
+    name: Nix Format Check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: DeterminateSystems/nix-installer-action@main
+      - run: nix fmt --accept-flake-config -- --check .
