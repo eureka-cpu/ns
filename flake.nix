@@ -40,6 +40,7 @@
             doCheck = true;
             nativeCheckInputs = attrValues {
               inherit (pkgs) ocamlformat;
+              inherit (pkgs) rustc rustfmt;
             };
             checkPhase = ''
               red() {
@@ -52,7 +53,12 @@
               fi
               if ! dune fmt --diff-command="diff --color=always"; then
                 printf "\n"
-                printf "$(red "Error:") Some files are not properly formatted\n"
+                printf "$(red "Error:") Some OCaml files are not properly formatted\n"
+                exit 1
+              fi
+              if ! rustfmt --check --color=always "${finalAttrs.src}/test/test.rs"; then
+                printf "\n"
+                printf "$(red "Error:") test.rs is not properly formatted\n"
                 exit 1
               fi
             '';
@@ -78,7 +84,7 @@
         default = pkgs.mkShell {
           inputsFrom = [ self.packages.${pkgs.stdenv.hostPlatform.system}.default ];
           packages = attrValues {
-            inherit (pkgs) ocamlformat nil;
+            inherit (pkgs) ocamlformat nil rustc rustfmt;
             inherit (pkgs.ocamlPackages) ocaml-lsp odoc;
           };
           shellHook = ''

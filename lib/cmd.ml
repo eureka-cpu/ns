@@ -16,6 +16,9 @@ module Cmd = struct
     | args -> List.fold_left (fun cmd arg -> Cmd.add_arg cmd arg) cmd args
   ;;
 
+  (** Convert a command into a string *)
+  let to_string cmd = Cmd.to_string cmd
+
   (** Run a command
 
     Example:

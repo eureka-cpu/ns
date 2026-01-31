@@ -17,14 +17,20 @@ module Cli = struct
   type strategy =
     { installables : string list
     ; target_info : target_info
+    ; printcmd : bool
     }
 
   (** Positional URI arguments passed to the program via the command line. *)
   let uris = Arg.(value & pos_all dirpath [] & info [])
 
+  let printcmd =
+    let doc = "Print the command to stdout instead of executing it." in
+    Arg.(value & flag & info [ "printcmd" ] ~doc)
+  ;;
+
   (** Processes the args so that the main function knows what to do with them. *)
   let make_strategy =
-    let build original_args =
+    let build original_args printcmd =
       let installables, target_info =
         let default_installables = []
         and default_target =
@@ -81,9 +87,9 @@ module Cli = struct
              , { entrypoint = None; attribute = None; subshell_dir = Some subshell_dir } )
            | _ -> Uri.parse_targets_tr original_args, default_target)
       in
-      { installables; target_info }
+      { installables; target_info; printcmd }
     in
-    Term.(const build $ uris)
+    Term.(const build $ uris $ printcmd)
   ;;
 
   let cmd entrypoint =
@@ -104,6 +110,8 @@ module Cli = struct
       ; `P
           "If a single SOURCE is provided and it is a directory, ns switches into it by \
            default unless a TARGET_DIR is explicitly given."
+      ; `S Manpage.s_options
+      ; `S ""
       ; `S Manpage.s_common_options
       ; `S ""
       ; `S Manpage.s_examples

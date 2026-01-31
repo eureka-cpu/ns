@@ -2,7 +2,7 @@ open Ns
 open Ns.Cmd
 open Ns.Util
 
-let main ({ installables; target_info } : Cli.strategy) =
+let main ({ installables; target_info; printcmd } : Cli.strategy) =
   let ({ entrypoint; attribute; subshell_dir } : Cli.target_info) = target_info in
   Option.value ~default:(Option.value ~default:(Sys.getcwd ()) entrypoint) subshell_dir
   |> Unix.cd;
@@ -26,7 +26,7 @@ let main ({ installables; target_info } : Cli.strategy) =
       |>+ [ "--command"; Unix.shell ]
     | None -> Cmd.builder "nix" |>+ [ "shell" ] |>+ installables
   in
-  ignore (Cmd.run cmd)
+  if printcmd then print_endline (Cmd.to_string cmd) else ignore (Cmd.run cmd)
 ;;
 
 Cli.eval main

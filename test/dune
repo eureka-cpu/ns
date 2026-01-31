@@ -1,0 +1,14 @@
+;; Define the test stanza for dune test
+
+(test
+ (name ns)
+ (deps test-ns)
+ (flags (:standard)))
+
+;; Rule to compile the Rust test file into a binary
+
+(rule
+ (targets test-ns) ; the Dune target name
+ (deps test.rs) ; path relative to this dune file
+ (action
+  (run rustc --test %{deps} -o %{targets})))
