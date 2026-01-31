@@ -42,6 +42,10 @@
               inherit (pkgs) ocamlformat;
               inherit (pkgs) rustc rustfmt;
             };
+            env = {
+              CLICOLOR_FORCE = 1;
+              DUNE_DIFF_COMMAND = "diff --color=always";
+            };
             checkPhase = ''
               red() {
                 printf "\033[1;31m%s\033[0m" "$*"
@@ -51,14 +55,19 @@
                 printf "$(red "Error:") Generated opam file does not match provided opam file\n"
                 exit 1
               fi
-              if ! dune fmt --diff-command="diff --color=always"; then
+              if ! dune fmt; then
                 printf "\n"
                 printf "$(red "Error:") Some OCaml files are not properly formatted\n"
                 exit 1
               fi
-              if ! rustfmt --check --color=always "${finalAttrs.src}/test/test.rs"; then
+              if ! rustfmt --check --color=always "${finalAttrs.src}/test/test_ns.rs"; then
                 printf "\n"
                 printf "$(red "Error:") test.rs is not properly formatted\n"
+                exit 1
+              fi
+              if ! dune test --force --no-buffer --display=quiet; then
+                printf "\n"
+                printf "$(red "Error:") dune test reported test failures\n"
                 exit 1
               fi
             '';
