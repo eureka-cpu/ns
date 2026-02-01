@@ -40,6 +40,7 @@
             doCheck = true;
             nativeCheckInputs = attrValues {
               inherit (pkgs) ocamlformat;
+              inherit (pkgs) rustc clippy rustfmt;
             };
             checkPhase = ''
               red() {
@@ -50,9 +51,24 @@
                 printf "$(red "Error:") Generated opam file does not match provided opam file\n"
                 exit 1
               fi
+              if ! dune test --force --no-buffer --display=quiet; then
+                printf "\n"
+                printf "$(red "Error:") dune test reported test failures\n"
+                exit 1
+              fi
+              if ! clippy-driver --test "${finalAttrs.src}/test/test_ns.rs" -Dwarnings; then
+                printf "\n"
+                printf "$(red "Error:") test.rs contains warnings\n"
+                exit 1
+              fi
               if ! dune fmt --diff-command="diff --color=always"; then
                 printf "\n"
-                printf "$(red "Error:") Some files are not properly formatted\n"
+                printf "$(red "Error:") Some OCaml files are not properly formatted\n"
+                exit 1
+              fi
+              if ! rustfmt --check --color=always "${finalAttrs.src}/test/test_ns.rs"; then
+                printf "\n"
+                printf "$(red "Error:") test.rs is not properly formatted\n"
                 exit 1
               fi
             '';
@@ -78,13 +94,16 @@
         default = pkgs.mkShell {
           inputsFrom = [ self.packages.${pkgs.stdenv.hostPlatform.system}.default ];
           packages = attrValues {
-            inherit (pkgs) ocamlformat nil;
+            inherit (pkgs) ocamlformat nil rustc clippy rustfmt;
             inherit (pkgs.ocamlPackages) ocaml-lsp odoc;
           };
           shellHook = ''
             dune build # Ensure build artifacts exist for LSP
           '';
         };
+      });
+      checks = eachSystem (pkgs: {
+        inherit (self.packages.${pkgs.stdenv.hostPlatform.system}) default;
       });
       formatter = eachSystem (pkgs: pkgs.nixpkgs-fmt);
     };
