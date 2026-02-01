@@ -28,55 +28,223 @@ fn shell_dir() -> path::PathBuf {
         .expect("failed to canonicalize path to ns binary")
 }
 
-#[test]
-fn single_arg_flake_no_attr() {
-    let output = process::Command::new(ns())
-        .args([flake_dir().as_os_str(), "--printcmd".as_ref()])
-        .output()
-        .expect("failed to get command output");
+fn assert_stdout_eq(stdout: &[u8], expected: &[&str]) {
+    let stdout = String::from_utf8_lossy(stdout);
+    let stdout = stdout.replace('\'', "");
+    let stdout: Vec<&str> = stdout.split_whitespace().collect();
 
-    assert!(output.status.success());
+    if expected != stdout.as_slice() {
+        panic!(
+            "\nExpected: \x1b[32m{:#?}\x1b[0m\nObserved: \x1b[31m{:#?}\x1b[0m",
+            expected,
+            stdout.as_slice()
+        )
+    }
 }
 
-#[test]
-fn single_arg_shell_no_attr() {
-    let output = process::Command::new(ns())
-        .args([shell_dir().as_os_str(), "--printcmd".as_ref()])
-        .output()
-        .expect("failed to get command output");
+mod nix_develop_tests {
+    use super::*;
 
-    assert!(output.status.success());
+    #[test]
+    fn single_arg_no_attr() {
+        let output = process::Command::new(ns())
+            .args([flake_dir().as_os_str(), "--printcmd".as_ref()])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn single_arg_single_attr() {
+        let flake_uri = format!("{}#default", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([&flake_uri, "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn two_args_no_attrs() {
+        let output = process::Command::new(ns())
+            .args([flake_dir().as_os_str(), ".".as_ref(), "--printcmd".as_ref()])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn two_args_single_attr_lhs() {
+        let flake_uri = format!("{}#default", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([&flake_uri, ".", "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
 }
 
-#[test]
-fn single_arg_flake_single_attr() {
-    let flake_uri = format!("{}#default", flake_dir().display());
-    let output = process::Command::new(ns())
-        .args([flake_uri, "--printcmd".into()])
-        .output()
-        .expect("failed to get command output");
+mod legacy_nix_shell_tests {
+    use super::*;
 
-    assert!(output.status.success());
+    #[test]
+    fn single_arg_no_attr() {
+        let output = process::Command::new(ns())
+            .args([shell_dir().as_os_str(), "--printcmd".as_ref()])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn single_arg_single_attr() {
+        let shell_uri = format!("{}#default", shell_dir().display());
+        let output = process::Command::new(ns())
+            .args([&shell_uri, "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
 }
 
-#[test]
-fn single_arg_shell_single_attr() {
-    let shell_uri = format!("{}#default", shell_dir().display());
-    let output = process::Command::new(ns())
-        .args([shell_uri, "--printcmd".into()])
-        .output()
-        .expect("failed to get command output");
+mod nix_shell_tests {
+    use super::*;
 
-    assert!(output.status.success());
-}
+    #[test]
+    fn single_arg_multi_attr() {
+        let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([&flake_uri, "--printcmd"])
+            .output()
+            .expect("failed to get command output");
 
-#[test]
-fn single_arg_flake_multi_attr() {
-    let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
-    let output = process::Command::new(ns())
-        .args([flake_uri, "--printcmd".into()])
-        .output()
-        .expect("failed to get command output");
+        assert!(output.status.success());
+    }
 
-    assert!(output.status.success());
+    #[test]
+    fn two_args_single_attr_rhs() {
+        let flake_uri = format!("{}#default", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([flake_dir().as_os_str(), flake_uri.as_ref(), "--printcmd".as_ref()])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn two_args_single_attrs() {
+        let flake_uri = format!("{}#default", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([&flake_uri, &flake_uri, "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn two_args_multi_attr_lhs() {
+        let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([&flake_uri, ".", "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn two_args_multi_attr_rhs() {
+        let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([flake_dir().as_os_str(), flake_uri.as_ref(), "--printcmd".as_ref()])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn two_args_multi_attrs() {
+        let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([&flake_uri, &flake_uri, "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+    
+    #[test]
+    fn three_args_single_attrs_lhs() {
+        let flake_uri = format!("{}#default", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([&flake_uri, "github:NixOS/nixpkgs#hello", ".", "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn three_args_single_attrs_rhs() {
+        let flake_uri = format!("{}#default", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([flake_dir().as_os_str(), flake_uri.as_ref(), "github:NixOS/nixpkgs#hello".as_ref(), "--printcmd".as_ref()])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn three_args_single_attrs() {
+        let flake_uri = format!("{}#default", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([&flake_uri, &flake_uri, "github:NixOS/nixpkgs#hello", "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn three_args_multi_attrs_lhs() {
+        let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([&flake_uri, "github:NixOS/nixpkgs#{hello,cowsay}", ".", "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+    
+    #[test]
+    fn three_args_multi_attrs_rhs() {
+        let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([flake_dir().as_os_str(), flake_uri.as_ref(), "github:NixOS/nixpkgs#{hello,cowsay}".as_ref(), "--printcmd".as_ref()])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn three_args_multi_attrs() {
+        let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
+        let output = process::Command::new(ns())
+            .args([&flake_uri, &flake_uri, "github:NixOS/nixpkgs#{hello,cowsay}", "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+    }
 }

@@ -4,6 +4,7 @@ let color_mode =
     (Option.map
        (fun force -> if force = "1" then "always" else "never")
        (Sys.getenv_opt "CLICOLOR_FORCE"))
-and cmd color_mode = Printf.sprintf "./test_ns --color=%s --nocapture" color_mode in
-let code = Sys.command (cmd color_mode) in
-exit code
+;;
+
+let cmd = Printf.sprintf {| sh -c ./test_ns --color=%s --no-capture |} color_mode in
+exit (Sys.command cmd)
