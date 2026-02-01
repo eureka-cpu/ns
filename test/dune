@@ -11,4 +11,4 @@
  (targets test_ns) ; the Dune target name
  (deps test_ns.rs) ; path relative to this dune file
  (action
-  (run rustc --test %{deps} -o %{targets})))
+  (run rustc --test %{deps} -o %{targets} --allow warnings)))
