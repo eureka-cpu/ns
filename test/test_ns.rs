@@ -131,7 +131,11 @@ mod nix_shell_tests {
     fn two_args_single_attr_rhs() {
         let flake_uri = format!("{}#default", flake_dir().display());
         let output = process::Command::new(ns())
-            .args([flake_dir().as_os_str(), flake_uri.as_ref(), "--printcmd".as_ref()])
+            .args([
+                flake_dir().as_os_str(),
+                flake_uri.as_ref(),
+                "--printcmd".as_ref(),
+            ])
             .output()
             .expect("failed to get command output");
 
@@ -164,7 +168,11 @@ mod nix_shell_tests {
     fn two_args_multi_attr_rhs() {
         let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
         let output = process::Command::new(ns())
-            .args([flake_dir().as_os_str(), flake_uri.as_ref(), "--printcmd".as_ref()])
+            .args([
+                flake_dir().as_os_str(),
+                flake_uri.as_ref(),
+                "--printcmd".as_ref(),
+            ])
             .output()
             .expect("failed to get command output");
 
@@ -181,7 +189,7 @@ mod nix_shell_tests {
 
         assert!(output.status.success());
     }
-    
+
     #[test]
     fn three_args_single_attrs_lhs() {
         let flake_uri = format!("{}#default", flake_dir().display());
@@ -197,7 +205,12 @@ mod nix_shell_tests {
     fn three_args_single_attrs_rhs() {
         let flake_uri = format!("{}#default", flake_dir().display());
         let output = process::Command::new(ns())
-            .args([flake_dir().as_os_str(), flake_uri.as_ref(), "github:NixOS/nixpkgs#hello".as_ref(), "--printcmd".as_ref()])
+            .args([
+                flake_dir().as_os_str(),
+                flake_uri.as_ref(),
+                "github:NixOS/nixpkgs#hello".as_ref(),
+                "--printcmd".as_ref(),
+            ])
             .output()
             .expect("failed to get command output");
 
@@ -208,7 +221,12 @@ mod nix_shell_tests {
     fn three_args_single_attrs() {
         let flake_uri = format!("{}#default", flake_dir().display());
         let output = process::Command::new(ns())
-            .args([&flake_uri, &flake_uri, "github:NixOS/nixpkgs#hello", "--printcmd"])
+            .args([
+                &flake_uri,
+                &flake_uri,
+                "github:NixOS/nixpkgs#hello",
+                "--printcmd",
+            ])
             .output()
             .expect("failed to get command output");
 
@@ -219,18 +237,28 @@ mod nix_shell_tests {
     fn three_args_multi_attrs_lhs() {
         let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
         let output = process::Command::new(ns())
-            .args([&flake_uri, "github:NixOS/nixpkgs#{hello,cowsay}", ".", "--printcmd"])
+            .args([
+                &flake_uri,
+                "github:NixOS/nixpkgs#{hello,cowsay}",
+                ".",
+                "--printcmd",
+            ])
             .output()
             .expect("failed to get command output");
 
         assert!(output.status.success());
     }
-    
+
     #[test]
     fn three_args_multi_attrs_rhs() {
         let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
         let output = process::Command::new(ns())
-            .args([flake_dir().as_os_str(), flake_uri.as_ref(), "github:NixOS/nixpkgs#{hello,cowsay}".as_ref(), "--printcmd".as_ref()])
+            .args([
+                flake_dir().as_os_str(),
+                flake_uri.as_ref(),
+                "github:NixOS/nixpkgs#{hello,cowsay}".as_ref(),
+                "--printcmd".as_ref(),
+            ])
             .output()
             .expect("failed to get command output");
 
@@ -241,7 +269,12 @@ mod nix_shell_tests {
     fn three_args_multi_attrs() {
         let flake_uri = format!("{}#{{hello,cowsay}}", flake_dir().display());
         let output = process::Command::new(ns())
-            .args([&flake_uri, &flake_uri, "github:NixOS/nixpkgs#{hello,cowsay}", "--printcmd"])
+            .args([
+                &flake_uri,
+                &flake_uri,
+                "github:NixOS/nixpkgs#{hello,cowsay}",
+                "--printcmd",
+            ])
             .output()
             .expect("failed to get command output");
 
