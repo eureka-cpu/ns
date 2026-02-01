@@ -11,6 +11,7 @@ The entire interface can be summarized by the following excerpt of the manpage:
 ns [OPTION]… [SOURCE]… [TARGET_DIR]
 ```
 
+> <pre>
 > Each SOURCE is positional and may be one of:
 > 
 >   URI#ATTR            select a devshell or package from a flake
@@ -23,6 +24,7 @@ ns [OPTION]… [SOURCE]… [TARGET_DIR]
 > 
 > If a single SOURCE is provided and it is a directory, ns switches into
 > it by default unless a TARGET_DIR is explicitly given.
+> </pre>
 
 Try it from anywhere:
 
