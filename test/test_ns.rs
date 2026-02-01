@@ -65,7 +65,7 @@ mod nix_develop_tests {
                 "develop",
                 &flake_dir().to_string_lossy(),
                 "--command",
-                &env_shell(),
+                env_shell(),
             ],
         );
     }
@@ -81,7 +81,7 @@ mod nix_develop_tests {
         assert!(output.status.success());
         assert_stdout_eq(
             &output.stdout,
-            &["nix", "develop", &flake_uri, "--command", &env_shell()],
+            &["nix", "develop", &flake_uri, "--command", env_shell()],
         );
     }
 
@@ -100,7 +100,7 @@ mod nix_develop_tests {
                 "develop",
                 &flake_dir().to_string_lossy(),
                 "--command",
-                &env_shell(),
+                env_shell(),
             ],
         );
     }
@@ -116,7 +116,7 @@ mod nix_develop_tests {
         assert!(output.status.success());
         assert_stdout_eq(
             &output.stdout,
-            &["nix", "develop", &flake_uri, "--command", &env_shell()],
+            &["nix", "develop", &flake_uri, "--command", env_shell()],
         );
     }
 }
@@ -138,7 +138,7 @@ mod legacy_nix_shell_tests {
                 "nix-shell",
                 &shell_dir().to_string_lossy(),
                 "--command",
-                &env_shell(),
+                env_shell(),
             ],
         );
     }
@@ -160,7 +160,7 @@ mod legacy_nix_shell_tests {
                 "default",
                 &shell_dir().to_string_lossy(),
                 "--command",
-                &env_shell(),
+                env_shell(),
             ],
         );
     }
