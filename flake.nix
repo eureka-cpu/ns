@@ -102,6 +102,9 @@
           '';
         };
       });
+      checks = eachSystem (pkgs: {
+        inherit (self.packages.${pkgs.stdenv.hostPlatform.system}) default;
+      });
       formatter = eachSystem (pkgs: pkgs.nixpkgs-fmt);
     };
 }
