@@ -18,6 +18,7 @@ module Cli = struct
     { installables : string list
     ; target_info : target_info
     ; printcmd : bool
+    ; force_experimental_features : string list option
     }
 
   (** Positional URI arguments passed to the program via the command line. *)
@@ -28,9 +29,14 @@ module Cli = struct
     Arg.(value & flag & info [ "printcmd" ] ~doc)
   ;;
 
+  let force_experimental_features =
+    let doc = "Force the use of flakes and nix-command experimental features." in
+    Arg.(value & flag & info [ "force"; "f" ] ~doc)
+  ;;
+
   (** Processes the args so that the main function knows what to do with them. *)
   let make_strategy =
-    let build original_args printcmd =
+    let build original_args printcmd force_experimental_features =
       let installables, target_info =
         let default_installables = []
         and default_target =
@@ -87,9 +93,22 @@ module Cli = struct
              , { entrypoint = None; attribute = None; subshell_dir = Some subshell_dir } )
            | _ -> Uri.parse_targets_tr original_args, default_target)
       in
-      { installables; target_info; printcmd }
+      { installables
+      ; target_info
+      ; printcmd
+      ; force_experimental_features =
+          (if force_experimental_features
+           then
+             Some
+               [ "--extra-experimental-features"
+               ; "flakes"
+               ; "--extra-experimental-features"
+               ; "nix-command"
+               ]
+           else None)
+      }
     in
-    Term.(const build $ uris $ printcmd)
+    Term.(const build $ uris $ printcmd $ force_experimental_features)
   ;;
 
   let cmd entrypoint =
