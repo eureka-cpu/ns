@@ -71,6 +71,8 @@ module Util = struct
     let parse_target target =
       let parse_uri uri attr_opt =
         match String.split_on_char ':' uri with
+        | [ "nixpkgs" ] | [ "pkgs" ] ->
+          RemoteResource (sprintf_uri_attr_opt "nixpkgs" attr_opt)
         | [ path ] ->
           let path = Unix.realpath path
           and is_multiattr maybe_multiattr =
