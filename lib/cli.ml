@@ -15,7 +15,7 @@ module Cli = struct
   (** Processed args that will be consumed by the main function to determine the
   behavior of the program. *)
   type strategy =
-    { installables : string list
+    { installables : Uri.uri list
     ; target_info : target_info
     ; printcmd : bool
     ; force_experimental_features : string list option
@@ -25,7 +25,12 @@ module Cli = struct
   let uris = Arg.(value & pos_all dirpath [] & info [])
 
   let printcmd =
-    let doc = "Print the command to stdout instead of executing it." in
+    let doc =
+      "Print the command strategy as newline separated values to stdout instead of \
+       executing it. The first command changes to the working directory, the second is \
+       the primary nix command and the last is an optional fallback nix command in the \
+       event that flake/nix-command features fail."
+    in
     Arg.(value & flag & info [ "printcmd" ] ~doc)
   ;;
 
@@ -64,7 +69,9 @@ module Cli = struct
         (* Two args passed *)
         (*******************)
         | [ maybe_subshell_dir; target ] ->
-          (match Uri.parse_target maybe_subshell_dir, Uri.parse_target target with
+          let maybe_subshell_dir = Uri.parse_target maybe_subshell_dir
+          and target = Uri.parse_target target in
+          (match maybe_subshell_dir, target with
            (* If maybe_subshell_dir does not have any attributes we know the user wants to change directories. *)
            | ( LocalResourceMaybeAttr (subshell_dir, None)
              , LocalResourceMaybeAttr (entrypoint, attribute) ) ->
@@ -73,11 +80,9 @@ module Cli = struct
                ; attribute
                ; subshell_dir = Some subshell_dir
                } )
-           | LocalResourceMaybeAttr (subshell_dir, None), LocalResourceMultiAttr _ ->
+           | ( LocalResourceMaybeAttr (subshell_dir, None)
+             , (LocalResourceMultiAttr _ | RemoteResource _) ) ->
              ( [ target ]
-             , { entrypoint = None; attribute = None; subshell_dir = Some subshell_dir } )
-           | LocalResourceMaybeAttr (subshell_dir, None), RemoteResource uri ->
-             ( [ uri ]
              , { entrypoint = None; attribute = None; subshell_dir = Some subshell_dir } )
            | _ -> Uri.parse_targets_tr original_args, default_target)
         (*****************************)
