@@ -44,12 +44,12 @@ module Cmd = struct
   ;;
 
   let print_strategy ({ workdir; primary; fallback } : strategy) =
-    print_endline
+    print_string
       (Printf.sprintf
          "'cd' '%s'\n%s\n%s"
          workdir
          (Bos.Cmd.to_string primary)
-         (Option.value ~default:"'None'" (Option.map Bos.Cmd.to_string fallback)))
+         (Option.value ~default:"" (Option.map Bos.Cmd.to_string fallback)))
   ;;
 
   let execute_strategy ({ workdir; primary; fallback } : strategy) =
