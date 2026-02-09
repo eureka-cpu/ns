@@ -40,6 +40,12 @@ module Util = struct
   module Uri = struct
     (* *)
 
+    (** A local reference to nixpkgs, eg. {nixpkgs#...} or {pkgs#...} (which resolves to the former) *)
+    type nixpkgs =
+      { uri : string
+      ; installables : string list
+      }
+
     (** URI variants, like {/path/to/flake#drv} or {github:NixOS/nixpkgs#drv} *)
     type uri =
       (* A path with up to one attribute, eg. /path/to/resouce or /path/to/resource#... *)
@@ -48,6 +54,8 @@ module Util = struct
       | LocalResourceMultiAttr of string * string
       (* A remote resource, eg. github:NixOS/nixpkgs *)
       | RemoteResource of string
+      (* A local reference to nixpkgs, eg. nixpkgs#... or pkgs#... (which resolves to the former) *)
+      | Nixpkgs of nixpkgs
 
     (** Format a uri and attribute into a string *)
     let sprintf_uri_attr path attr = Printf.sprintf "%s#%s" path attr
@@ -65,17 +73,38 @@ module Util = struct
       | LocalResourceMaybeAttr (path, attr_opt) -> sprintf_uri_attr_opt path attr_opt
       | LocalResourceMultiAttr (path, attr) -> sprintf_uri_attr path attr
       | RemoteResource uri -> uri
+      | Nixpkgs { uri; _ } -> uri
     ;;
 
     (** Parse target argument for optional attribute selection *)
     let parse_target target =
       let parse_uri uri attr_opt =
+        let is_multiattr maybe_multiattr =
+          String.starts_with ~prefix:"{" maybe_multiattr
+          && String.ends_with ~suffix:"}" maybe_multiattr
+        in
         match String.split_on_char ':' uri with
-        | [ path ] ->
-          let path = Unix.realpath path
-          and is_multiattr maybe_multiattr =
-            String.starts_with ~prefix:"{" maybe_multiattr
+        | [ "nixpkgs" ] | [ "pkgs" ] ->
+          let parse_installables attr_opt =
+            match attr_opt with
+            | Some attr ->
+              if is_multiattr attr
+              then (
+                match String.split_on_char '{' attr with
+                | [ _; rhs ] ->
+                  (match String.split_on_char '}' rhs with
+                   | [ lhs; _ ] -> String.split_on_char ',' lhs
+                   | _ -> [])
+                | _ -> [])
+              else [ attr ]
+            | None -> []
           in
+          Nixpkgs
+            { uri = sprintf_uri_attr_opt "nixpkgs" attr_opt
+            ; installables = parse_installables attr_opt
+            }
+        | [ path ] ->
+          let path = Unix.realpath path in
           (match attr_opt with
            | Some attr ->
              if is_multiattr attr
@@ -91,15 +120,24 @@ module Util = struct
         Error.handle_ns_error "invalid uri or attribute selection syntax: %s\n%!" target
     ;;
 
-    (** Parse target arguments recursively, returning a list of strings.
+    (** Parse target arguments recursively, returning a list of {!type:uri}.
     This function is tail recursive optimized. *)
     let parse_targets_tr targets =
       let rec parse_targets acc = function
         | [] -> acc
-        | target :: remaining ->
-          parse_targets (uri_to_string (parse_target target) :: acc) remaining
+        | target :: remaining -> parse_targets (parse_target target :: acc) remaining
       in
       parse_targets [] targets
+    ;;
+
+    let combine_installables_tr installables =
+      let rec combine_installables acc = function
+        | [] -> Some acc
+        | Nixpkgs { installables; _ } :: remaining ->
+          combine_installables (acc @ installables) remaining
+        | _ -> None
+      in
+      combine_installables [] installables
     ;;
   end
 end

@@ -23,20 +23,32 @@ fn flake_dir() -> path::PathBuf {
         .join("src")
         .join("flake")
         .canonicalize()
-        .expect("failed to canonicalize path to ns binary")
+        .expect("failed to canonicalize path to flake")
 }
 fn shell_dir() -> path::PathBuf {
     dune_test_dir()
         .join("src")
         .join("shell")
         .canonicalize()
-        .expect("failed to canonicalize path to ns binary")
+        .expect("failed to canonicalize path to shell")
+}
+fn flake_shell_dir() -> path::PathBuf {
+    dune_test_dir()
+        .join("src")
+        .join("flake_shell")
+        .canonicalize()
+        .expect("failed to canonicalize path to flake_shell")
 }
 
-fn assert_stdout_eq(stdout: &[u8], expected: &[&str]) {
+fn assert_stdout_eq(stdout: &[u8], expected: &[&[&str]]) {
     let stdout = String::from_utf8_lossy(stdout);
-    let stdout = stdout.replace('\'', "");
-    let stdout: Vec<&str> = stdout.split_whitespace().collect();
+    let stdout: Vec<Vec<String>> = stdout
+        .split('\n')
+        .map(|cmd| {
+            let cmd = cmd.replace('\'', "");
+            cmd.split_whitespace().map(|cmd| cmd.to_string()).collect()
+        })
+        .collect();
 
     if expected != stdout.as_slice() {
         panic!(
@@ -61,11 +73,15 @@ mod nix_develop_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "develop",
-                &flake_dir().to_string_lossy(),
-                "--command",
-                env_shell(),
+                &["cd", &flake_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "develop",
+                    &flake_dir().to_string_lossy(),
+                    "--command",
+                    env_shell(),
+                ],
+                &[],
             ],
         );
     }
@@ -85,15 +101,19 @@ mod nix_develop_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "develop",
-                &flake_dir().to_string_lossy(),
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
-                "--command",
-                env_shell(),
+                &["cd", &flake_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "develop",
+                    &flake_dir().to_string_lossy(),
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                    "--command",
+                    env_shell(),
+                ],
+                &[],
             ],
         );
     }
@@ -109,7 +129,11 @@ mod nix_develop_tests {
         assert!(output.status.success());
         assert_stdout_eq(
             &output.stdout,
-            &["nix", "develop", &flake_uri, "--command", env_shell()],
+            &[
+                &["cd", &flake_dir().to_string_lossy()],
+                &["nix", "develop", &flake_uri, "--command", env_shell()],
+                &[],
+            ],
         );
     }
 
@@ -125,15 +149,19 @@ mod nix_develop_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "develop",
-                &flake_uri,
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
-                "--command",
-                env_shell(),
+                &["cd", &flake_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "develop",
+                    &flake_uri,
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                    "--command",
+                    env_shell(),
+                ],
+                &[],
             ],
         );
     }
@@ -149,11 +177,15 @@ mod nix_develop_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "develop",
-                &flake_dir().to_string_lossy(),
-                "--command",
-                env_shell(),
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "develop",
+                    &flake_dir().to_string_lossy(),
+                    "--command",
+                    env_shell(),
+                ],
+                &[],
             ],
         );
     }
@@ -174,15 +206,19 @@ mod nix_develop_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "develop",
-                &flake_dir().to_string_lossy(),
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
-                "--command",
-                env_shell(),
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "develop",
+                    &flake_dir().to_string_lossy(),
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                    "--command",
+                    env_shell(),
+                ],
+                &[],
             ],
         );
     }
@@ -198,7 +234,11 @@ mod nix_develop_tests {
         assert!(output.status.success());
         assert_stdout_eq(
             &output.stdout,
-            &["nix", "develop", &flake_uri, "--command", env_shell()],
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "develop", &flake_uri, "--command", env_shell()],
+                &[],
+            ],
         );
     }
 
@@ -214,15 +254,48 @@ mod nix_develop_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "develop",
-                &flake_uri,
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
-                "--command",
-                env_shell(),
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "develop",
+                    &flake_uri,
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                    "--command",
+                    env_shell(),
+                ],
+                &[],
+            ],
+        );
+    }
+
+    #[test]
+    fn flake_and_shell_fallback() {
+        let output = process::Command::new(ns())
+            .args([flake_shell_dir().as_os_str(), "--printcmd".as_ref()])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+        assert_stdout_eq(
+            &output.stdout,
+            &[
+                &["cd", &flake_shell_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "develop",
+                    &flake_shell_dir().to_string_lossy(),
+                    "--command",
+                    env_shell(),
+                ],
+                &[
+                    "nix-shell",
+                    &flake_shell_dir().to_string_lossy(),
+                    "--command",
+                    env_shell(),
+                ],
             ],
         );
     }
@@ -242,10 +315,14 @@ mod legacy_nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix-shell",
-                &shell_dir().to_string_lossy(),
-                "--command",
-                env_shell(),
+                &["cd", &shell_dir().to_string_lossy()],
+                &[
+                    "nix-shell",
+                    &shell_dir().to_string_lossy(),
+                    "--command",
+                    env_shell(),
+                ],
+                &[],
             ],
         );
     }
@@ -265,10 +342,14 @@ mod legacy_nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix-shell",
-                &shell_dir().to_string_lossy(),
-                "--command",
-                env_shell(),
+                &["cd", &shell_dir().to_string_lossy()],
+                &[
+                    "nix-shell",
+                    &shell_dir().to_string_lossy(),
+                    "--command",
+                    env_shell(),
+                ],
+                &[],
             ],
         );
     }
@@ -285,12 +366,16 @@ mod legacy_nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix-shell",
-                "--attr",
-                "default",
-                &shell_dir().to_string_lossy(),
-                "--command",
-                env_shell(),
+                &["cd", &shell_dir().to_string_lossy()],
+                &[
+                    "nix-shell",
+                    "--attr",
+                    "default",
+                    &shell_dir().to_string_lossy(),
+                    "--command",
+                    env_shell(),
+                ],
+                &[],
             ],
         );
     }
@@ -307,12 +392,16 @@ mod legacy_nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix-shell",
-                "--attr",
-                "default",
-                &shell_dir().to_string_lossy(),
-                "--command",
-                env_shell(),
+                &["cd", &shell_dir().to_string_lossy()],
+                &[
+                    "nix-shell",
+                    "--attr",
+                    "default",
+                    &shell_dir().to_string_lossy(),
+                    "--command",
+                    env_shell(),
+                ],
+                &[],
             ],
         );
     }
@@ -330,7 +419,14 @@ mod nix_shell_tests {
             .expect("failed to get command output");
 
         assert!(output.status.success());
-        assert_stdout_eq(&output.stdout, &["nix", "shell", &flake_uri]);
+        assert_stdout_eq(
+            &output.stdout,
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", &flake_uri],
+                &[],
+            ],
+        );
     }
 
     #[test]
@@ -345,13 +441,17 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                &flake_uri,
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    &flake_uri,
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
             ],
         );
     }
@@ -371,7 +471,11 @@ mod nix_shell_tests {
         assert!(output.status.success());
         assert_stdout_eq(
             &output.stdout,
-            &["nix", "shell", &flake_uri, &flake_dir().to_string_lossy()],
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", &flake_uri, &flake_dir().to_string_lossy()],
+                &[],
+            ],
         );
     }
 
@@ -392,14 +496,18 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                &flake_uri,
-                &flake_dir().to_string_lossy(),
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    &flake_uri,
+                    &flake_dir().to_string_lossy(),
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
             ],
         );
     }
@@ -413,7 +521,14 @@ mod nix_shell_tests {
             .expect("failed to get command output");
 
         assert!(output.status.success());
-        assert_stdout_eq(&output.stdout, &["nix", "shell", &flake_uri, &flake_uri]);
+        assert_stdout_eq(
+            &output.stdout,
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", &flake_uri, &flake_uri],
+                &[],
+            ],
+        );
     }
 
     #[test]
@@ -428,14 +543,18 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                &flake_uri,
-                &flake_uri,
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    &flake_uri,
+                    &flake_uri,
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
             ],
         );
     }
@@ -449,7 +568,14 @@ mod nix_shell_tests {
             .expect("failed to get command output");
 
         assert!(output.status.success());
-        assert_stdout_eq(&output.stdout, &["nix", "shell", &flake_uri]);
+        assert_stdout_eq(
+            &output.stdout,
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", &flake_uri],
+                &[],
+            ],
+        );
     }
 
     #[test]
@@ -464,13 +590,17 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                &flake_uri,
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    &flake_uri,
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
             ],
         );
     }
@@ -490,7 +620,11 @@ mod nix_shell_tests {
         assert!(output.status.success());
         assert_stdout_eq(
             &output.stdout,
-            &["nix", "shell", &flake_uri, &flake_dir().to_string_lossy()],
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", &flake_uri, &flake_dir().to_string_lossy()],
+                &[],
+            ],
         );
     }
 
@@ -511,14 +645,18 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                &flake_uri,
-                &flake_dir().to_string_lossy(),
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    &flake_uri,
+                    &flake_dir().to_string_lossy(),
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
             ],
         );
     }
@@ -532,7 +670,14 @@ mod nix_shell_tests {
             .expect("failed to get command output");
 
         assert!(output.status.success());
-        assert_stdout_eq(&output.stdout, &["nix", "shell", &flake_uri, &flake_uri]);
+        assert_stdout_eq(
+            &output.stdout,
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", &flake_uri, &flake_uri],
+                &[],
+            ],
+        );
     }
 
     #[test]
@@ -547,14 +692,18 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                &flake_uri,
-                &flake_uri,
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    &flake_uri,
+                    &flake_uri,
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
             ],
         );
     }
@@ -569,7 +718,14 @@ mod nix_shell_tests {
             .expect("failed to get command output");
 
         assert!(output.status.success());
-        assert_stdout_eq(&output.stdout, &["nix", "shell", &flake_uri, remote_uri]);
+        assert_stdout_eq(
+            &output.stdout,
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", &flake_uri, remote_uri],
+                &[],
+            ],
+        );
     }
 
     #[test]
@@ -585,14 +741,18 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                &flake_uri,
-                remote_uri,
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    &flake_uri,
+                    remote_uri,
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
             ],
         );
     }
@@ -615,11 +775,15 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                remote_uri,
-                &flake_uri,
-                &flake_dir().to_string_lossy(),
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    remote_uri,
+                    &flake_uri,
+                    &flake_dir().to_string_lossy(),
+                ],
+                &[],
             ],
         );
     }
@@ -643,15 +807,19 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                remote_uri,
-                &flake_uri,
-                &flake_dir().to_string_lossy(),
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    remote_uri,
+                    &flake_uri,
+                    &flake_dir().to_string_lossy(),
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
             ],
         );
     }
@@ -668,7 +836,11 @@ mod nix_shell_tests {
         assert!(output.status.success());
         assert_stdout_eq(
             &output.stdout,
-            &["nix", "shell", remote_uri, &flake_uri, &flake_uri],
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", remote_uri, &flake_uri, &flake_uri],
+                &[],
+            ],
         );
     }
 
@@ -685,15 +857,19 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                remote_uri,
-                &flake_uri,
-                &flake_uri,
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    remote_uri,
+                    &flake_uri,
+                    &flake_uri,
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
             ],
         );
     }
@@ -708,7 +884,14 @@ mod nix_shell_tests {
             .expect("failed to get command output");
 
         assert!(output.status.success());
-        assert_stdout_eq(&output.stdout, &["nix", "shell", &flake_uri, remote_uri]);
+        assert_stdout_eq(
+            &output.stdout,
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", &flake_uri, remote_uri],
+                &[],
+            ],
+        );
     }
 
     #[test]
@@ -724,14 +907,18 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                &flake_uri,
-                remote_uri,
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    &flake_uri,
+                    remote_uri,
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
             ],
         );
     }
@@ -754,11 +941,15 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                remote_uri,
-                &flake_uri,
-                &flake_dir().to_string_lossy(),
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    remote_uri,
+                    &flake_uri,
+                    &flake_dir().to_string_lossy(),
+                ],
+                &[],
             ],
         );
     }
@@ -782,15 +973,19 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                remote_uri,
-                &flake_uri,
-                &flake_dir().to_string_lossy(),
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    remote_uri,
+                    &flake_uri,
+                    &flake_dir().to_string_lossy(),
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
             ],
         );
     }
@@ -807,7 +1002,11 @@ mod nix_shell_tests {
         assert!(output.status.success());
         assert_stdout_eq(
             &output.stdout,
-            &["nix", "shell", remote_uri, &flake_uri, &flake_uri],
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", remote_uri, &flake_uri, &flake_uri],
+                &[],
+            ],
         );
     }
 
@@ -824,15 +1023,65 @@ mod nix_shell_tests {
         assert_stdout_eq(
             &output.stdout,
             &[
-                "nix",
-                "shell",
-                remote_uri,
-                &flake_uri,
-                &flake_uri,
-                "--extra-experimental-features",
-                "flakes",
-                "--extra-experimental-features",
-                "nix-command",
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &[
+                    "nix",
+                    "shell",
+                    remote_uri,
+                    &flake_uri,
+                    &flake_uri,
+                    "--extra-experimental-features",
+                    "flakes",
+                    "--extra-experimental-features",
+                    "nix-command",
+                ],
+                &[],
+            ],
+        );
+    }
+
+    #[test]
+    fn nixpkgs_single_attr() {
+        let nixpkgs = "nixpkgs#hello";
+        let output = process::Command::new(ns())
+            .args([nixpkgs, "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+        assert_stdout_eq(
+            &output.stdout,
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", nixpkgs],
+                &["nix-shell", "--packages", "hello", "--command", env_shell()],
+            ],
+        );
+    }
+
+    #[test]
+    fn nixpkgs_multi_attr() {
+        let nixpkgs = "nixpkgs#{hello,cowsay,pipes-rs}";
+        let output = process::Command::new(ns())
+            .args([nixpkgs, "--printcmd"])
+            .output()
+            .expect("failed to get command output");
+
+        assert!(output.status.success());
+        assert_stdout_eq(
+            &output.stdout,
+            &[
+                &["cd", &dune_test_dir().to_string_lossy()],
+                &["nix", "shell", nixpkgs],
+                &[
+                    "nix-shell",
+                    "--packages",
+                    "hello",
+                    "cowsay",
+                    "pipes-rs",
+                    "--command",
+                    env_shell(),
+                ],
             ],
         );
     }

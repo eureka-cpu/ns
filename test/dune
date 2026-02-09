@@ -2,7 +2,12 @@
 
 (test
  (name test_ns)
- (deps test_ns src/flake/flake.nix src/shell/shell.nix)
+ (deps
+  test_ns
+  src/flake/flake.nix
+  src/shell/shell.nix
+  src/flake_shell/flake.nix
+  src/flake_shell/shell.nix)
  (flags (:standard)))
 
 ;; Rule to compile the Rust test file into a binary

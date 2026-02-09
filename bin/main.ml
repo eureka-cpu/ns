@@ -7,34 +7,34 @@ let main
         Cli.strategy)
   =
   let ({ entrypoint; attribute; subshell_dir } : Cli.target_info) = target_info in
-  Option.value ~default:(Option.value ~default:(Sys.getcwd ()) entrypoint) subshell_dir
-  |> Unix.cd;
-  let cmd =
-    match entrypoint with
-    | Some entrypoint ->
-      (match Unix.flake_exists_at entrypoint with
-       | true ->
-         Cmd.builder "nix"
-         |>+ [ "develop" ] @ [ Uri.sprintf_uri_attr_opt entrypoint attribute ]
-         |>+ Option.value ~default:[] force_experimental_features
-       | false ->
-         (match Unix.shell_exists_at entrypoint with
-          | true ->
-            Cmd.builder "nix-shell"
-            |>+ Option.value
-                  ~default:[]
-                  (Option.map (fun attr -> [ "--attr"; attr ]) attribute)
-            |>+ [ entrypoint ]
-          | false ->
-            Error.handle_ns_error "no available devshell entrypoint: %s\n%!" entrypoint))
-      |>+ [ "--command"; Unix.shell ]
-    | None ->
-      Cmd.builder "nix"
-      |>+ [ "shell" ]
-      |>+ installables
-      |>+ Option.value ~default:[] force_experimental_features
+  let strategy =
+    let workdir =
+      Option.value
+        ~default:(Option.value ~default:(Sys.getcwd ()) entrypoint)
+        subshell_dir
+    and primary, fallback =
+      match entrypoint with
+      | Some entrypoint ->
+        if Unix.flake_exists_at entrypoint
+        then
+          ( Cmd.nix_develop entrypoint attribute force_experimental_features
+          , if Unix.shell_exists_at entrypoint
+            then Some (Cmd.legacy_nix_shell_from_entrypoint entrypoint attribute)
+            else None )
+        else if Unix.shell_exists_at entrypoint
+        then Cmd.legacy_nix_shell_from_entrypoint entrypoint attribute, None
+        else Error.handle_ns_error "no available devshell entrypoint: %s\n%!" entrypoint
+      | None ->
+        ( Cmd.nix_shell
+            (List.map Uri.uri_to_string installables)
+            force_experimental_features
+        , Option.map
+            (fun installables -> Cmd.legacy_nix_shell_from_installables installables)
+            (Uri.combine_installables_tr installables) )
+    in
+    { workdir; primary; fallback }
   in
-  if printcmd then print_endline (Cmd.to_string cmd) else ignore (Cmd.run cmd)
+  if printcmd then print_strategy strategy else execute_strategy strategy
 ;;
 
 Cli.eval main
