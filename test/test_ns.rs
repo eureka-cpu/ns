@@ -6,6 +6,7 @@ static ENV_SHELL: sync::OnceLock<String> = sync::OnceLock::new();
 fn dune_test_dir() -> &'static path::PathBuf {
     DUNE_TEST_DIR.get_or_init(|| env::current_dir().expect("failed to get test directory"))
 }
+// TODO: Use libc to get the login shell of the user.
 fn env_shell() -> &'static String {
     ENV_SHELL.get_or_init(|| env::var("SHELL").expect("failed to get shell from environment"))
 }
