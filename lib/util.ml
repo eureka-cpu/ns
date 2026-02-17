@@ -32,8 +32,11 @@ module Util = struct
     (** Whether a flake.nix file exists at the given directory *)
     let flake_exists_at dir = Sys.file_exists (Filename.concat dir "flake.nix")
 
-    (** Whether a shell.nix file exists at the given directory *)
-    let shell_exists_at dir = Sys.file_exists (Filename.concat dir "shell.nix")
+    (** Whether a shell.nix or default.nix file exists at the given directory *)
+    let shell_exists_at dir =
+      Sys.file_exists (Filename.concat dir "shell.nix")
+      || Sys.file_exists (Filename.concat dir "default.nix")
+    ;;
   end
 
   (** Types and functions for parsing, interacting and formatting URIs. *)
