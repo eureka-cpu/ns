@@ -12,31 +12,18 @@
     {
       packages = eachSystem (pkgs:
         let
-          inherit (builtins) elemAt split fetchurl attrNames foldl' listToAttrs;
+          inherit (builtins) elemAt split attrNames foldl' listToAttrs;
           inherit (pkgs.ocamlPackages) buildDunePackage;
           inherit (pkgs.lib) cleanSource getLicenseFromSpdxId;
-          cmdliner = pkgs.ocamlPackages.cmdliner.overrideAttrs (old:
-            let
-              version = "2.1.0";
-            in
-            {
-              inherit version;
-              src = fetchurl {
-                url = "https://erratique.ch/software/${old.pname}/releases/${old.pname}-${version}.tbz";
-                sha256 = "sha256:1s9lhkzrblaf1rk0b9lg95622p0jv4qmmby8xg8jzma3rlacc548";
-              };
-            });
           dune-project = pkgs.importDuneProject ./dune-project;
-          depends = let depends = listToAttrs (map (dep: { name = dep; value = pkgs.ocamlPackages.${dep}; }) (attrNames (foldl' (acc: dep: acc // dep) { } dune-project.package.depends))); in removeAttrs depends [ "dune" "ocaml" "cmdliner" ];
+          depends = let depends = listToAttrs (map (dep: { name = dep; value = pkgs.ocamlPackages.${dep}; }) (attrNames (foldl' (acc: dep: acc // dep) { } dune-project.package.depends))); in removeAttrs depends [ "dune" "ocaml" ];
         in
         {
           default = buildDunePackage (finalAttrs: {
             inherit (dune-project) version;
             pname = dune-project.package.name;
             src = cleanSource ./.;
-            buildInputs = attrValues (depends // {
-              inherit cmdliner;
-            });
+            buildInputs = attrValues depends;
             doCheck = true;
             nativeCheckInputs = attrValues {
               inherit (pkgs) ocamlformat;
@@ -73,8 +60,8 @@
               fi
             '';
             postInstall = ''
-              ${cmdliner}/bin/cmdliner install tool-support $out/bin/ns $out
-              ${cmdliner}/bin/cmdliner install generic-completion $out/share
+              ${depends.cmdliner}/bin/cmdliner install tool-support $out/bin/ns $out
+              ${depends.cmdliner}/bin/cmdliner install generic-completion $out/share
             '';
             meta =
               let
