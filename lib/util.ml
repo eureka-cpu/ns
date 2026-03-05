@@ -23,7 +23,7 @@ module Util = struct
     ;;
 
     (** Get the user's login shell *)
-    let shell = (Unix.getpwuid (Unix.getuid ())).Unix.pw_shell
+    let shell () = (Unix.getpwuid (Unix.getuid ())).Unix.pw_shell
 
     (** Whether a flake.nix file exists at the given directory *)
     let flake_exists_at dir = Sys.file_exists (Filename.concat dir "flake.nix")

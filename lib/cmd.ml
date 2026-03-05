@@ -19,14 +19,14 @@ module Cmd = struct
     Bos.Cmd.v "nix"
     |>+ [ "develop" ] @ [ Uri.sprintf_uri_attr_opt entrypoint attribute ]
     |>+ Option.value ~default:[] force_experimental_features
-    |>+ [ "--command"; Unix.shell ]
+    |>+ [ "--command"; Unix.shell () ]
   ;;
 
   let legacy_nix_shell_from_entrypoint entrypoint attribute =
     Bos.Cmd.v "nix-shell"
     |>+ Option.value ~default:[] (Option.map (fun attr -> [ "--attr"; attr ]) attribute)
     |>+ [ entrypoint ]
-    |>+ [ "--command"; Unix.shell ]
+    |>+ [ "--command"; Unix.shell () ]
   ;;
 
   let nix_shell installables force_experimental_features =
@@ -40,7 +40,7 @@ module Cmd = struct
     (* Need to combine/validate that the installables given are all Nixpkgs *)
     Bos.Cmd.v "nix-shell"
     |>+ [ "--packages" ] @ installables
-    |>+ [ "--command"; Unix.shell ]
+    |>+ [ "--command"; Unix.shell () ]
   ;;
 
   let print_strategy ({ workdir; primary; fallback } : strategy) =
