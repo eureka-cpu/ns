@@ -22,12 +22,8 @@ module Util = struct
         Error.handle_ns_error "%s" (Error.sprintf_unix_error e path)
     ;;
 
-    (** Get the user's shell from the environment *)
-    let shell =
-      match Sys.getenv_opt "SHELL" with
-      | Some s -> s
-      | None -> "/bin/sh"
-    ;;
+    (** Get the user's login shell *)
+    let shell () = (Unix.getpwuid (Unix.getuid ())).Unix.pw_shell
 
     (** Whether a flake.nix file exists at the given directory *)
     let flake_exists_at dir = Sys.file_exists (Filename.concat dir "flake.nix")

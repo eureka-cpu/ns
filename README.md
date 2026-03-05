@@ -36,7 +36,7 @@ nix run github:eureka-cpu/ns -- <URI>#<ATTR>
 Add or remove it from your user profile:
 
 ```sh
-nix profile install github:eureka-cpu/ns
+nix profile add github:eureka-cpu/ns
 nix profile remove ns
 ```
 

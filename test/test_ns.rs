@@ -1,4 +1,4 @@
-use std::{env, path, process, sync};
+use std::{env, ffi, path, process, sync};
 
 static DUNE_TEST_DIR: sync::OnceLock<path::PathBuf> = sync::OnceLock::new();
 static ENV_SHELL: sync::OnceLock<String> = sync::OnceLock::new();
@@ -6,8 +6,41 @@ static ENV_SHELL: sync::OnceLock<String> = sync::OnceLock::new();
 fn dune_test_dir() -> &'static path::PathBuf {
     DUNE_TEST_DIR.get_or_init(|| env::current_dir().expect("failed to get test directory"))
 }
-fn env_shell() -> &'static String {
-    ENV_SHELL.get_or_init(|| env::var("SHELL").expect("failed to get shell from environment"))
+
+/// Minimal bindings to dynamically linked libc, used for getting the shell of the logged in user.
+mod libc {
+    unsafe extern "C" {
+        pub fn getuid() -> u32;
+        pub fn getpwuid(uid: u32) -> *mut Passwd;
+    }
+
+    #[repr(C)]
+    pub struct Passwd {
+        pub pw_name: *mut i8,
+        pub pw_passwd: *mut i8,
+        pub pw_uid: u32,
+        pub pw_gid: u32,
+        #[cfg(target_os = "macos")]
+        pub pw_change: i64,
+        #[cfg(target_os = "macos")]
+        pub pw_class: *mut i8,
+        pub pw_gecos: *mut i8,
+        pub pw_dir: *mut i8,
+        pub pw_shell: *mut i8,
+        #[cfg(target_os = "macos")]
+        pub pw_expire: i64,
+    }
+}
+
+fn env_shell() -> &'static str {
+    ENV_SHELL.get_or_init(|| unsafe {
+        let uid = libc::getuid();
+        let pw = libc::getpwuid(uid);
+        assert!(!pw.is_null());
+        ffi::CStr::from_ptr((*pw).pw_shell)
+            .to_string_lossy()
+            .into_owned()
+    })
 }
 
 fn ns() -> path::PathBuf {
