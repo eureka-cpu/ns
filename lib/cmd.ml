@@ -34,6 +34,7 @@ module Cmd = struct
     |>+ [ "shell" ]
     |>+ installables
     |>+ Option.value ~default:[] force_experimental_features
+    |>+ [ "--command"; Unix.shell () ]
   ;;
 
   let legacy_nix_shell_from_installables installables =

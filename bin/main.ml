@@ -3,7 +3,7 @@ open Ns.Cmd
 open Ns.Util
 
 let main
-      ({ installables; target_info; printcmd; force_experimental_features } :
+      ({ installables; target_info; printcmd; force_experimental_features; _ } :
         Cli.strategy)
   =
   let ({ entrypoint; attribute; subshell_dir } : Cli.target_info) = target_info in
