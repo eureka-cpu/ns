@@ -20,7 +20,7 @@ module Cli = struct
     ; printcmd : bool
     ; force_experimental_features : string list option
     ; sh : string
-    ; norc : bool
+    ; sharg : string list
     ; impure : bool
     }
 
@@ -42,26 +42,19 @@ module Cli = struct
     Arg.(value & flag & info [ "force"; "f" ] ~doc)
   ;;
 
-  (** TODO: Check if the given arg is a dir, like /bin/zsh or /nix/store/... and if it
-            isn't then we should consider it a package and do the following expansion:
-
-    $(nix-build '<nixpkgs>' -A %s --no-out-link --quiet)/bin/$(nix-instantiate '<nixpkgs>' --eval --raw -A %s.meta.mainProgram)
-  *)
   let sh =
     let doc =
       "The shell to use in the subshell. Accepts a package name (e.g. zsh), a nix-store \
        path, or a local path (e.g. /bin/sh). Defaults to the current user's login shell."
     in
-    Arg.(value & opt filepath (Unix.shell ()) & info [ "sh" ] ~doc)
+    Arg.(value & opt filepath (Unix.eval_sh (Unix.pw_shell ())) & info [ "sh" ] ~doc)
   ;;
 
-  (** TODO: Create an enum and function which matches this to add the correct arguments for the shell *)
-  let norc =
-    let doc = "Do not source shell rc files." in
-    Arg.(value & flag & info [ "norc" ] ~doc)
+  let sharg =
+    let doc = "Supply arguments to the shell." in
+    Arg.(value & opt_all string [] & info [ "sharg" ] ~doc)
   ;;
 
-  (** TODO: Use this as the predicate to determine when to not use --pure or --ignore-env *)
   let impure =
     let doc = "Allow the current shell environment to bleed into the subshell." in
     Arg.(value & flag & info [ "impure" ] ~doc)
@@ -69,7 +62,7 @@ module Cli = struct
 
   (** Processes the args so that the main function knows what to do with them. *)
   let make_strategy =
-    let build original_args printcmd force_experimental_features sh norc impure =
+    let build original_args printcmd force_experimental_features sh sharg impure =
       let installables, target_info =
         let default_installables = []
         and default_target =
@@ -139,13 +132,13 @@ module Cli = struct
                ; "nix-command"
                ]
            else None)
-      ; sh
-      ; norc
+      ; sh = Unix.eval_sh sh
+      ; sharg
       ; impure
       }
     in
     Term.(
-      const build $ uris $ printcmd $ force_experimental_features $ sh $ norc $ impure)
+      const build $ uris $ printcmd $ force_experimental_features $ sh $ sharg $ impure)
   ;;
 
   let cmd entrypoint =

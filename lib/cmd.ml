@@ -15,33 +15,33 @@ module Cmd = struct
     | args -> List.fold_left (fun cmd arg -> Bos.Cmd.add_arg cmd arg) cmd args
   ;;
 
-  let nix_develop entrypoint attribute force_experimental_features =
+  let nix_develop entrypoint attribute force_experimental_features sh =
     Bos.Cmd.v "nix"
     |>+ [ "develop" ] @ [ Uri.sprintf_uri_attr_opt entrypoint attribute ]
     |>+ Option.value ~default:[] force_experimental_features
-    |>+ [ "--command"; Unix.shell () ]
+    |>+ [ "--ignore-env" ]
+    |>+ [ "--command"; sh ]
   ;;
 
-  let legacy_nix_shell_from_entrypoint entrypoint attribute =
+  let legacy_nix_shell_from_entrypoint entrypoint attribute sh =
     Bos.Cmd.v "nix-shell"
     |>+ Option.value ~default:[] (Option.map (fun attr -> [ "--attr"; attr ]) attribute)
     |>+ [ entrypoint ]
-    |>+ [ "--command"; Unix.shell () ]
+    |>+ [ "--pure" ]
+    |>+ [ "--command"; sh ]
   ;;
 
-  let nix_shell installables force_experimental_features =
+  let nix_shell installables force_experimental_features sh =
     Bos.Cmd.v "nix"
     |>+ [ "shell" ]
     |>+ installables
     |>+ Option.value ~default:[] force_experimental_features
-    |>+ [ "--command"; Unix.shell () ]
+    |>+ [ "--command"; sh ]
   ;;
 
-  let legacy_nix_shell_from_installables installables =
+  let legacy_nix_shell_from_installables installables sh =
     (* Need to combine/validate that the installables given are all Nixpkgs *)
-    Bos.Cmd.v "nix-shell"
-    |>+ [ "--packages" ] @ installables
-    |>+ [ "--command"; Unix.shell () ]
+    Bos.Cmd.v "nix-shell" |>+ [ "--packages" ] @ installables |>+ [ "--command"; sh ]
   ;;
 
   let print_strategy ({ workdir; primary; fallback } : strategy) =

@@ -23,7 +23,7 @@ module Util = struct
     ;;
 
     (** Get the user's login shell *)
-    let shell () = (Unix.getpwuid (Unix.getuid ())).Unix.pw_shell
+    let pw_shell () = (Unix.getpwuid (Unix.getuid ())).Unix.pw_shell
 
     (** Whether a flake.nix file exists at the given directory *)
     let flake_exists_at dir = Sys.file_exists (Filename.concat dir "flake.nix")
@@ -32,6 +32,39 @@ module Util = struct
     let shell_exists_at dir =
       Sys.file_exists (Filename.concat dir "shell.nix")
       || Sys.file_exists (Filename.concat dir "default.nix")
+    ;;
+
+    (** Determines which shell to use. If the user gives a package
+    we build it and evaluate the main program to get the store path.
+    If there is no login shell, default to nixpkgs#bash. *)
+    let eval_sh sh =
+      let default = "bash"
+      and get_bin pkg =
+        let run_cmd cmd =
+          let ic = Unix.open_process_in cmd in
+          let result = Option.get (In_channel.input_line ic) in
+          (* TODO: Handle this potential error *)
+          let _ = Unix.close_process_in ic in
+          result
+        in
+        let store_path =
+          run_cmd (Printf.sprintf "nix-build '<nixpkgs>' -A %s --no-out-link --quiet" pkg)
+        and program =
+          run_cmd
+            (Printf.sprintf
+               "nix-instantiate '<nixpkgs>' --eval --raw -A %s.meta.mainProgram"
+               pkg)
+        in
+        let bin_path = Printf.sprintf "%s/bin/%s" store_path program in
+        bin_path
+      in
+      if sh = "/noshell" || sh = "/sbin/nologin"
+      then get_bin default
+      else (
+        match String.split_on_char '/' sh with
+        | [ "" ] -> Error.handle_ns_error "invalid argument: shell cannot be empty\n%!"
+        | [ pkg ] -> get_bin pkg
+        | _ -> sh)
     ;;
   end
 
