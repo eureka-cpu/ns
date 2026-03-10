@@ -52,7 +52,7 @@ module Cli = struct
       "The shell to use in the subshell. Accepts a package name (e.g. zsh), a nix-store \
        path, or a local path (e.g. /bin/sh). Defaults to the current user's login shell."
     in
-    Arg.(value & opt dirpath (Unix.shell ()) & info [ "sh" ] ~doc)
+    Arg.(value & opt filepath (Unix.shell ()) & info [ "sh" ] ~doc)
   ;;
 
   (** TODO: Create an enum and function which matches this to add the correct arguments for the shell *)
