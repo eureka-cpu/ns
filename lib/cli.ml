@@ -45,7 +45,8 @@ module Cli = struct
   let sh =
     let doc =
       "The shell to use in the subshell. Accepts a package name (e.g. zsh), a nix-store \
-       path, or a local path (e.g. /bin/sh). Defaults to the current user's login shell."
+       path, or a local path (e.g. /bin/sh). Defaults to the current user's login shell \
+       or bash if no user is logged in."
     in
     Arg.(value & opt filepath (Unix.eval_sh (Unix.pw_shell ())) & info [ "sh" ] ~doc)
   ;;

@@ -19,7 +19,6 @@ module Cmd = struct
     Bos.Cmd.v "nix"
     |>+ [ "develop" ] @ [ Uri.sprintf_uri_attr_opt entrypoint attribute ]
     |>+ Option.value ~default:[] force_experimental_features
-    |>+ [ "--ignore-env" ]
     |>+ [ "--command"; sh ]
   ;;
 
