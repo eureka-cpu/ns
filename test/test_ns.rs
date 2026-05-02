@@ -37,7 +37,7 @@ fn env_shell() -> &'static str {
         let uid = libc::getuid();
         let pw = libc::getpwuid(uid);
         assert!(!pw.is_null());
-        ffi::CStr::from_ptr((*pw).pw_shell)
+        ffi::CStr::from_ptr((*pw).pw_shell.cast())
             .to_string_lossy()
             .into_owned()
     })
