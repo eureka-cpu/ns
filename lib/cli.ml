@@ -19,6 +19,9 @@ module Cli = struct
     ; target_info : target_info
     ; printcmd : bool
     ; force_experimental_features : string list option
+    ; sh : string
+    ; sharg : string list
+    ; impure : bool
     }
 
   (** Positional URI arguments passed to the program via the command line. *)
@@ -39,9 +42,28 @@ module Cli = struct
     Arg.(value & flag & info [ "force"; "f" ] ~doc)
   ;;
 
+  let sh =
+    let doc =
+      "The shell to use in the subshell. Accepts a package name (e.g. zsh), a nix-store \
+       path, or a local path (e.g. /bin/sh). Defaults to the current user's login shell \
+       or bash if no user is logged in."
+    in
+    Arg.(value & opt filepath (Unix.eval_sh (Unix.pw_shell ())) & info [ "sh" ] ~doc)
+  ;;
+
+  let sharg =
+    let doc = "Supply arguments to the shell." in
+    Arg.(value & opt_all string [] & info [ "sharg" ] ~doc)
+  ;;
+
+  let impure =
+    let doc = "Allow the current shell environment to bleed into the subshell." in
+    Arg.(value & flag & info [ "impure" ] ~doc)
+  ;;
+
   (** Processes the args so that the main function knows what to do with them. *)
   let make_strategy =
-    let build original_args printcmd force_experimental_features =
+    let build original_args printcmd force_experimental_features sh sharg impure =
       let installables, target_info =
         let default_installables = []
         and default_target =
@@ -111,9 +133,13 @@ module Cli = struct
                ; "nix-command"
                ]
            else None)
+      ; sh = Unix.eval_sh sh
+      ; sharg
+      ; impure
       }
     in
-    Term.(const build $ uris $ printcmd $ force_experimental_features)
+    Term.(
+      const build $ uris $ printcmd $ force_experimental_features $ sh $ sharg $ impure)
   ;;
 
   let cmd entrypoint =
